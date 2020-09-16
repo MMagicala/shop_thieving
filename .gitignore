@@ -1,0 +1,8 @@
+twitchconfig.txt
+info.displayconfig
+/preferences
+/sendToDevs
+pom.xml
+/.idea
+*.iml
+/target/*
