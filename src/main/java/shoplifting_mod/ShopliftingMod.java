@@ -42,12 +42,18 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.Hitbox;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
+import com.megacrit.cardcrawl.rooms.ShopRoom;
+import com.megacrit.cardcrawl.shop.Merchant;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
+import com.megacrit.cardcrawl.vfx.SpeechBubble;
 import com.megacrit.cardcrawl.vfx.combat.DamageImpactBlurEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
+import javassist.expr.ExprEditor;
+import javassist.expr.FieldAccess;
+import javassist.expr.MethodCall;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -59,13 +65,12 @@ public class ShopliftingMod implements PostInitializeSubscriber {
     private static SpireConfig config;
 
     // Stats
-    private static final float successRate = 0.4f;
-    private static final int damageAmount = 25;
-    private static final float PROGRESS_TIME = 1f;
+    private static final float successRate = 0.5f;
+    private static final int damageAmount = 0;
 
     private static boolean isItemStolen = false;
     public static float prevItemX, prevItemY;
-    private static boolean isKickedOut = false;
+    public static boolean isKickedOut = false;
 
     // Mod UI
     private static final String HOTKEY_KEY = "hotkey";
@@ -74,7 +79,11 @@ public class ShopliftingMod implements PostInitializeSubscriber {
     private static final float BUTTON_LABEL_X = 475.0f;
     private static final float BUTTON_LABEL_Y = 700.0f;
 
-    private static final String[] DIALOGUE = {"Thief!", "Hey! No stealing!", "Do you want me to kick you out?"};
+    // Merchant dialogue
+    private static final String[] CAUGHT_DIALOGUE = {"Thief!", "Hey! No stealing!", "Do you want me to kick you out?"};
+    private static final String[] FORBID_DIALOGUE = {"Don't come into my shop again!", "Screw off!"};
+
+    private static final Random random = new Random();
 
     public ShopliftingMod() {
         System.out.println("Shoplifting Mod initialized");
@@ -171,35 +180,34 @@ public class ShopliftingMod implements PostInitializeSubscriber {
 
     /**
      * Common insert patch for each item
-     * @param __instance the item being clicked on
+     * @param __instance  the item being clicked on
      * @param hoveredCard is null if the item is not a card
      * @return
      */
-    private static SpireReturn<Void> CommonInsert(Object __instance, AbstractCard hoveredCard){
+    private static SpireReturn<Void> CommonInsert(Object __instance, AbstractCard hoveredCard) {
         int itemPrice = -1;
         if (__instance instanceof StoreRelic) {
             itemPrice = ((StoreRelic) __instance).price;
         } else if (__instance instanceof StorePotion) {
             itemPrice = ((StorePotion) __instance).price;
-        }else if(__instance instanceof ShopScreen){
+        } else if (__instance instanceof ShopScreen) {
             itemPrice = hoveredCard.price;
         }
         if (AbstractDungeon.player.gold < itemPrice && Gdx.input.isKeyPressed(config.getInt(HOTKEY_KEY))) {
             // Attempt to steal the item
-            Random random = new Random();
             float rollResult = random.nextFloat();
             if (rollResult < successRate) {
                 // Success! Give the player money to purchase the item
                 AbstractDungeon.player.gold += itemPrice;
                 isItemStolen = true;
                 if (__instance instanceof StoreRelic) {
-                    ((StoreRelic)__instance).purchaseRelic();
+                    ((StoreRelic) __instance).purchaseRelic();
                 } else if (__instance instanceof StorePotion) {
-                    ((StorePotion)__instance).purchasePotion();
-                }else if(__instance instanceof ShopScreen){
+                    ((StorePotion) __instance).purchasePotion();
+                } else if (__instance instanceof ShopScreen) {
                     try {
                         Method purchaseCardMethod = ShopScreen.class.getDeclaredMethod("purchaseCard", AbstractCard.class);
-                        if(!purchaseCardMethod.isAccessible()){
+                        if (!purchaseCardMethod.isAccessible()) {
                             purchaseCardMethod.setAccessible(true);
                         }
                         purchaseCardMethod.invoke(__instance, hoveredCard);
@@ -213,17 +221,8 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                 int coin = random.nextInt(2);
                 String soundKey = coin == 1 ? "BLUNT_FAST" : "BLUNT_HEAVY";
                 CardCrawlGame.sound.play(soundKey);
-//                AbstractDungeon.topLevelEffectsQueue.add(new DamageImpactBlurEffect())
-
-                // Choose random shopkeeper dialogue
-                // TODO: use the NPC dialogue instead of the shop one
-/*
-                int index = random.nextInt(DIALOGUE.length);
-                AbstractDungeon.shopScreen.createSpeech(DIALOGUE[index]);
-*/
-
                 // Kick player out of shop if they are alive
-                if(!AbstractDungeon.player.isDead) {
+                if (!AbstractDungeon.player.isDead) {
                     AbstractDungeon.closeCurrentScreen();
                     isKickedOut = true;
                 }
@@ -244,5 +243,55 @@ public class ShopliftingMod implements PostInitializeSubscriber {
 
     public static boolean isItemStolen() {
         return isItemStolen;
+    }
+
+    // Prevent shopkeeper from talking after caught shoplifting
+    @SpirePatch(
+            clz = Merchant.class,
+            method = "update"
+    )
+    public static class MuteMerchantDialoguePatch {
+        // Freeze speech timer
+        @SpireInsertPatch(
+                locator = SpeechTimerUpdateLocator.class
+        )
+        public static void Insert1(Merchant __instance) {
+            // Undo the update if freezing the timer
+            if(isKickedOut){
+                float speechTimer = (float)ReflectionHacks.getPrivate(__instance, Merchant.class, "speechTimer");
+                speechTimer += Gdx.graphics.getDeltaTime();
+                ReflectionHacks.setPrivate(__instance, Merchant.class, "speechTimer",speechTimer);
+            }
+        }
+
+        private static class SpeechTimerUpdateLocator extends SpireInsertLocator {
+            public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
+                Matcher matcher = new Matcher.FieldAccessMatcher(Merchant.class, "speechTimer");
+                return LineFinder.findInOrder(ctMethodToPatch, matcher);
+            }
+        }
+
+        @SpireInsertPatch(
+                locator = MerchantClickedLocator.class
+        )
+        public static SpireReturn<Void> Insert2(Merchant __instance) {
+            // Play custom merchant dialogue
+            playCustomMerchantDialogue(FORBID_DIALOGUE);
+            // Exit the method early
+            return isKickedOut ? SpireReturn.Return(null) : SpireReturn.Continue();
+        }
+
+        private static class MerchantClickedLocator extends SpireInsertLocator {
+            public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
+                Matcher matcher = new Matcher.FieldAccessMatcher(AbstractDungeon.class, "overlayMenu");
+                return LineFinder.findInOrder(ctMethodToPatch, matcher);
+            }
+        }
+    }
+
+    private static void playCustomMerchantDialogue(String[] dialogue){
+        Merchant merchant = ((ShopRoom) (AbstractDungeon.getCurrRoom())).merchant;
+        int index = random.nextInt(dialogue.length);
+        AbstractDungeon.effectList.add(new SpeechBubble(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, 3.0F, dialogue[index], false));
     }
 }
