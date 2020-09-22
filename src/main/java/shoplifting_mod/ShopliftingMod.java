@@ -169,6 +169,12 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         }
     }
 
+    /**
+     * Common insert patch for each item
+     * @param __instance the item being clicked on
+     * @param hoveredCard is null if the item is not a card
+     * @return
+     */
     private static SpireReturn<Void> CommonInsert(Object __instance, AbstractCard hoveredCard){
         int itemPrice = -1;
         if (__instance instanceof StoreRelic) {

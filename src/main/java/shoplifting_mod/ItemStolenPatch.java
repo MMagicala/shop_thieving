@@ -64,6 +64,12 @@ public class ItemStolenPatch {
             };
         }
 
+        /**
+         * Generates a code expression for each item class
+         * @param fileName Identifies the type of item
+         * @param methodName
+         * @return
+         */
         private static String getExpr(String fileName, String methodName) {
             StringBuilder sb = new StringBuilder();
             sb.append("if(!");
@@ -100,11 +106,15 @@ public class ItemStolenPatch {
             return sb.toString();
         }
 
-        // y = false -> x
-        // uppercase = false -> lowercase
-        private static void addSaveCoordinatesExpr(StringBuilder sb, String propertyPrefix, boolean uppercase) {
+        /**
+         * Generates code expression to save the coordinates of an item
+         * @param sb
+         * @param propertyPrefix identifies the item's property name
+         * @param isUppercase determines case for x and y in property name. If false, lowercase
+         */
+        private static void addSaveCoordinatesExpr(StringBuilder sb, String propertyPrefix, boolean isUppercase) {
             char uppercaseCoordinate = 'X';
-            char coordinate = uppercase ? 'X' : 'x';
+            char coordinate = isUppercase ? 'X' : 'x';
             for (int i = 0; i < 2; i++) {
                 sb.append(ShopliftingMod.class.getName());
                 sb.append(".prevItem");
@@ -119,6 +129,7 @@ public class ItemStolenPatch {
         }
     }
 
+    // Get potion x and y before it is moved
     @SpirePatch(
             clz = StorePotion.class,
             method = "purchasePotion"
