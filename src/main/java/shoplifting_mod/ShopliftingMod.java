@@ -40,6 +40,7 @@ import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
+import com.megacrit.cardcrawl.helpers.Hitbox;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
@@ -60,6 +61,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
     // Stats
     private static final float successRate = 0.4f;
     private static final int damageAmount = 25;
+    private static final float PROGRESS_TIME = 1f;
 
     private static boolean isItemStolen = false;
     public static float prevItemX, prevItemY;
@@ -86,7 +88,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
     public void receivePostInitialize() {
         // Define default properties
         Properties properties = new Properties();
-        properties.setProperty(HOTKEY_KEY, Integer.toString(Input.Keys.X));
+        properties.setProperty(HOTKEY_KEY, Integer.toString(Input.Keys.CONTROL_LEFT));
 
         // Try to load a config file. If not found, use the default properties
         try {
@@ -132,7 +134,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
     )
     public static class StealCardPatch {
         @SpireInsertPatch(
-                locator = ItemHoveredCodeLocator.class,
+                locator = ItemClickedLocator.class,
                 localvars = {"hoveredCard"}
         )
         public static SpireReturn<Void> Insert(Object __instance, AbstractCard hoveredCard) {
@@ -150,17 +152,20 @@ public class ShopliftingMod implements PostInitializeSubscriber {
     )
     public static class StealPotionOrRelicPatch {
         @SpireInsertPatch(
-                locator = ItemHoveredCodeLocator.class
+                locator = ItemClickedLocator.class
         )
         public static SpireReturn<Void> Insert(Object __instance) {
             return CommonInsert(__instance, null);
         }
     }
 
-    private static class ItemHoveredCodeLocator extends SpireInsertLocator {
+    private static class ItemClickedLocator extends SpireInsertLocator {
         public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
-            Matcher matcher = new Matcher.MethodCallMatcher(ShopScreen.class, "moveHand");
-            return LineFinder.findAllInOrder(ctMethodToPatch, matcher);
+            Matcher matcher = new Matcher.FieldAccessMatcher(Settings.class, "isTouchScreen");
+            int[] results = LineFinder.findAllInOrder(ctMethodToPatch, matcher);
+            int[] desiredResults = new int[1];
+            desiredResults[0] = results[results.length-1];
+            return desiredResults;
         }
     }
 
@@ -173,8 +178,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         }else if(__instance instanceof ShopScreen){
             itemPrice = hoveredCard.price;
         }
-        if (AbstractDungeon.player.gold < itemPrice
-                && Gdx.input.isKeyJustPressed(config.getInt(HOTKEY_KEY))) {
+        if (AbstractDungeon.player.gold < itemPrice && Gdx.input.isKeyPressed(config.getInt(HOTKEY_KEY))) {
             // Attempt to steal the item
             Random random = new Random();
             float rollResult = random.nextFloat();
@@ -201,13 +205,16 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                 // Take damage if caught and play sound/vfx
                 AbstractDungeon.player.damage(new DamageInfo(null, damageAmount, DamageInfo.DamageType.NORMAL));
                 int coin = random.nextInt(2);
-                String key = coin == 1 ? "BLUNT_FAST" : "BLUNT_HEAVY";
-                CardCrawlGame.sound.play(key);
+                String soundKey = coin == 1 ? "BLUNT_FAST" : "BLUNT_HEAVY";
+                CardCrawlGame.sound.play(soundKey);
 //                AbstractDungeon.topLevelEffectsQueue.add(new DamageImpactBlurEffect())
 
                 // Choose random shopkeeper dialogue
+                // TODO: use the NPC dialogue instead of the shop one
+/*
                 int index = random.nextInt(DIALOGUE.length);
                 AbstractDungeon.shopScreen.createSpeech(DIALOGUE[index]);
+*/
 
                 // Kick player out of shop if they are alive
                 if(!AbstractDungeon.player.isDead) {
