@@ -26,12 +26,10 @@ package shoplifting_mod;
 
 import basemod.*;
 import basemod.interfaces.PostInitializeSubscriber;
-import basemod.interfaces.RenderSubscriber;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
 import com.megacrit.cardcrawl.cards.AbstractCard;
@@ -39,21 +37,16 @@ import com.megacrit.cardcrawl.cards.DamageInfo;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
-import com.megacrit.cardcrawl.helpers.FontHelper;
-import com.megacrit.cardcrawl.helpers.Hitbox;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
+import com.megacrit.cardcrawl.saveAndContinue.SaveFile;
 import com.megacrit.cardcrawl.shop.Merchant;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
 import com.megacrit.cardcrawl.vfx.SpeechBubble;
-import com.megacrit.cardcrawl.vfx.combat.DamageImpactBlurEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
-import javassist.expr.ExprEditor;
-import javassist.expr.FieldAccess;
-import javassist.expr.MethodCall;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -80,8 +73,24 @@ public class ShopliftingMod implements PostInitializeSubscriber {
     private static final float BUTTON_LABEL_Y = 700.0f;
 
     // Merchant dialogue
+    private static final float DIALOGUE_TIME = 4;
+    private static float currentDialogueTime = -1;
     private static final String[] CAUGHT_DIALOGUE = {"Thief!", "Hey! No stealing!", "Do you want me to kick you out?"};
     private static final String[] FORBID_DIALOGUE = {"Don't come into my shop again!", "Screw off!"};
+
+    private static final LinkedList<Dialogue> dialogueQueue = new LinkedList<>();
+
+    private static class Dialogue {
+        private final float x;
+        private final float y;
+        private final String text;
+
+        public Dialogue(float x, float y, String text) {
+            this.x = x;
+            this.y = y;
+            this.text = text;
+        }
+    }
 
     private static final Random random = new Random();
 
@@ -173,7 +182,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
             Matcher matcher = new Matcher.FieldAccessMatcher(Settings.class, "isTouchScreen");
             int[] results = LineFinder.findAllInOrder(ctMethodToPatch, matcher);
             int[] desiredResults = new int[1];
-            desiredResults[0] = results[results.length-1];
+            desiredResults[0] = results[results.length - 1];
             return desiredResults;
         }
     }
@@ -226,6 +235,9 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                     AbstractDungeon.closeCurrentScreen();
                     isKickedOut = true;
                 }
+                // Shopkeeper dialogue
+                enqueueMerchantDialogue(CAUGHT_DIALOGUE);
+                enqueueMerchantDialogue(new String[]{"test"});
             }
 
             // Return early
@@ -256,11 +268,27 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                 locator = SpeechTimerUpdateLocator.class
         )
         public static void Insert1(Merchant __instance) {
-            // Undo the update if freezing the timer
-            if(isKickedOut){
-                float speechTimer = (float)ReflectionHacks.getPrivate(__instance, Merchant.class, "speechTimer");
+            // Freeze the original timer so merchant doesn't say his own words
+            if (isKickedOut) {
+                float speechTimer = (float) ReflectionHacks.getPrivate(__instance, Merchant.class, "speechTimer");
                 speechTimer += Gdx.graphics.getDeltaTime();
-                ReflectionHacks.setPrivate(__instance, Merchant.class, "speechTimer",speechTimer);
+                ReflectionHacks.setPrivate(__instance, Merchant.class, "speechTimer", speechTimer);
+
+                // Use our own speech timer
+                if(currentDialogueTime > 0){
+                    // Update timer
+                    currentDialogueTime -= Gdx.graphics.getDeltaTime();
+                }else if(!dialogueQueue.isEmpty()) {
+                    // Once time runs out, make merchant talk
+                    Dialogue dialogue = dialogueQueue.poll();
+                    assert dialogue != null;
+                    AbstractDungeon.effectList.add(new SpeechBubble(dialogue.x, dialogue.y, 3.0F,
+                            dialogue.text, false));
+                    // Reset timer for the next dialogue
+                    if (!dialogueQueue.isEmpty()) {
+                        currentDialogueTime = DIALOGUE_TIME;
+                    }
+                }
             }
         }
 
@@ -276,7 +304,9 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         )
         public static SpireReturn<Void> Insert2(Merchant __instance) {
             // Play custom merchant dialogue
-            playCustomMerchantDialogue(FORBID_DIALOGUE);
+            if (isKickedOut) {
+                playCustomMerchantDialogue(FORBID_DIALOGUE);
+            }
             // Exit the method early
             return isKickedOut ? SpireReturn.Return(null) : SpireReturn.Continue();
         }
@@ -289,7 +319,13 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         }
     }
 
-    private static void playCustomMerchantDialogue(String[] dialogue){
+    private static void enqueueMerchantDialogue(String[] dialogue) {
+        Merchant merchant = ((ShopRoom) (AbstractDungeon.getCurrRoom())).merchant;
+        int index = random.nextInt(dialogue.length);
+        dialogueQueue.add(new Dialogue(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, dialogue[index]));
+    }
+
+    private static void playCustomMerchantDialogue(String[] dialogue) {
         Merchant merchant = ((ShopRoom) (AbstractDungeon.getCurrRoom())).merchant;
         int index = random.nextInt(dialogue.length);
         AbstractDungeon.effectList.add(new SpeechBubble(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, 3.0F, dialogue[index], false));
