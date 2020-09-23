@@ -30,14 +30,20 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
+import com.megacrit.cardcrawl.blights.AbstractBlight;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.DamageInfo;
+import com.megacrit.cardcrawl.cards.curses.CurseOfTheBell;
+import com.megacrit.cardcrawl.core.AbstractCreature;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
+import com.megacrit.cardcrawl.monsters.exordium.GremlinNob;
+import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.saveAndContinue.SaveFile;
 import com.megacrit.cardcrawl.shop.Merchant;
@@ -46,9 +52,11 @@ import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
 import com.megacrit.cardcrawl.ui.buttons.ProceedButton;
 import com.megacrit.cardcrawl.vfx.SpeechBubble;
+import com.megacrit.cardcrawl.vfx.GainPennyEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 
+import javax.smartcardio.Card;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -235,6 +243,31 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                 if (!AbstractDungeon.player.isDead) {
                     AbstractDungeon.closeCurrentScreen();
                     isKickedOut = true;
+
+                    // Apply two punishments
+                    for (int i = 0; i < 2; i++) {
+                        // int bound = 5;
+                        int dice = 0; // random.nextInt(bound);
+                        switch (dice) {
+                            case 0:
+                                // Lose all your money
+                                // Sfx
+                                if (AbstractDungeon.player.gold > 0) {
+                                    CardCrawlGame.sound.play("GOLD_JINGLE");
+                                }
+                                // Vfx
+                                Merchant merchant = ((ShopRoom) AbstractDungeon.getCurrRoom()).merchant;
+                                float playerX = AbstractDungeon.player.hb.cX;
+                                float playerY = AbstractDungeon.player.hb.cY;
+                                DummyEntity dummyEntity = new DummyEntity();
+                                for (int j = 0; j < AbstractDungeon.player.gold; j++) {
+                                    AbstractDungeon.effectList.add(new GainPennyEffect(dummyEntity, playerX, playerY, merchant.hb.cX, merchant.hb.cY, false));
+                                }
+                                // Finally apply punishment
+                                AbstractDungeon.player.loseGold(AbstractDungeon.player.gold);
+                                break;
+                        }
+                    }
                 }
                 // Shopkeeper dialogue
                 enqueueMerchantDialogue(CAUGHT_DIALOGUE);
@@ -246,6 +279,16 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         }
         // Hotkey not pressed, return to normal
         return SpireReturn.Continue();
+    }
+
+    private static class DummyEntity extends AbstractCreature {
+        @Override
+        public void damage(DamageInfo damageInfo) {
+        }
+
+        @Override
+        public void render(SpriteBatch spriteBatch) {
+        }
     }
 
     // Getter/setter methods
