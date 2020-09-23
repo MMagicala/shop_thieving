@@ -35,6 +35,7 @@ import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
 import com.megacrit.cardcrawl.blights.AbstractBlight;
 import com.megacrit.cardcrawl.cards.AbstractCard;
+import com.megacrit.cardcrawl.cards.CardGroup;
 import com.megacrit.cardcrawl.cards.DamageInfo;
 import com.megacrit.cardcrawl.cards.curses.CurseOfTheBell;
 import com.megacrit.cardcrawl.core.AbstractCreature;
@@ -70,9 +71,10 @@ public class ShopliftingMod implements PostInitializeSubscriber {
     private static final float successRate = 0.5f;
     private static final int damageAmount = 0;
 
-    private static boolean isItemStolen = false;
+    private static boolean isItemStolen = false; // Determines if item was *successfully* stolen
     public static float prevItemX, prevItemY;
     public static boolean isKickedOut = false;
+    private static boolean isPunishmentIssued = false;
 
     // Mod UI
     private static final String HOTKEY_KEY = "hotkey";
@@ -82,7 +84,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
     private static final float BUTTON_LABEL_Y = 700.0f;
 
     // Merchant dialogue
-    private static final float DIALOGUE_TIME = 4;
+    private static final float DIALOGUE_TIME = 3;
     private static float currentDialogueTime = -1;
     private static final String[] CAUGHT_DIALOGUE = {"Thief!", "Hey! No stealing!", "Do you want me to kick you out?"};
     private static final String[] FORBID_DIALOGUE = {"Don't come into my shop again!", "Screw off!"};
@@ -198,6 +200,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
 
     /**
      * Common insert patch for each item
+     *
      * @param __instance  the item being clicked on
      * @param hoveredCard is null if the item is not a card
      * @return
@@ -243,11 +246,10 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                 if (!AbstractDungeon.player.isDead) {
                     AbstractDungeon.closeCurrentScreen();
                     isKickedOut = true;
-
                     // Apply two punishments
                     for (int i = 0; i < 2; i++) {
                         // int bound = 5;
-                        int dice = 0; // random.nextInt(bound);
+                        int dice = 1; // random.nextInt(bound);
                         switch (dice) {
                             case 0:
                                 // Lose all your money
@@ -266,12 +268,21 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                                 // Finally apply punishment
                                 AbstractDungeon.player.loseGold(AbstractDungeon.player.gold);
                                 break;
+                            case 1:
+                                // Sfx
+                                CardCrawlGame.sound.play("BELL");
+                                CardGroup cardGroup = new CardGroup(CardGroup.CardGroupType.UNSPECIFIED);
+                                for(int j = 0; j < 2; j++){
+                                    cardGroup.addToBottom(AbstractDungeon.returnRandomCurse());
+                                }
+                                AbstractDungeon.gridSelectScreen.openConfirmationGrid(cardGroup, "You shoplifted!");
+                                break;
                         }
                     }
                 }
                 // Shopkeeper dialogue
                 enqueueMerchantDialogue(CAUGHT_DIALOGUE);
-                enqueueMerchantDialogue(new String[]{"test"});
+                enqueueMerchantDialogue(new String[]{""});
             }
 
             // Return early
@@ -306,7 +317,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
             clz = Merchant.class,
             method = "update"
     )
-    public static class MuteMerchantDialoguePatch {
+    public static class CustomMerchantDialoguePatch {
         // Freeze speech timer
         @SpireInsertPatch(
                 locator = SpeechTimerUpdateLocator.class
@@ -319,17 +330,52 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                 ReflectionHacks.setPrivate(__instance, Merchant.class, "speechTimer", speechTimer);
 
                 // Use our own speech timer
-                if(currentDialogueTime > 0){
+                if (currentDialogueTime > 0) {
                     // Update timer
                     currentDialogueTime -= Gdx.graphics.getDeltaTime();
-                }else if(!dialogueQueue.isEmpty()) {
-                    // Once time runs out, make merchant talk
-                    Dialogue dialogue = dialogueQueue.poll();
-                    assert dialogue != null;
-                    AbstractDungeon.effectList.add(new SpeechBubble(dialogue.x, dialogue.y, 3.0F,
-                            dialogue.text, false));
-                    // Reset timer for the duration of the dialogue
-                    currentDialogueTime = DIALOGUE_TIME;
+                } else {
+                    if (!dialogueQueue.isEmpty()) {
+                        // Once time runs out, make merchant talk
+                        Dialogue dialogue = dialogueQueue.poll();
+                        assert dialogue != null;
+                        AbstractDungeon.effectList.add(new SpeechBubble(dialogue.x, dialogue.y, 3.0F,
+                                dialogue.text, false));
+                        // Reset timer for the duration of the dialogue
+                        currentDialogueTime = DIALOGUE_TIME;
+                    } else if(!isPunishmentIssued){
+                        // After dialogue is finally completed, apply two punishments
+                        for (int i = 0; i < 2; i++) {
+                            // int bound = 5;
+                            int dice = 1; // random.nextInt(bound);
+                            switch (dice) {
+                                case 0:
+                                    // Lose all your money
+                                    // Sfx
+                                    CardCrawlGame.sound.play("GOLD_JINGLE");
+                                    // Vfx
+                                    Merchant merchant = ((ShopRoom) AbstractDungeon.getCurrRoom()).merchant;
+                                    float playerX = AbstractDungeon.player.hb.cX;
+                                    float playerY = AbstractDungeon.player.hb.cY;
+                                    DummyEntity dummyEntity = new DummyEntity();
+                                    for (int j = 0; j < AbstractDungeon.player.gold; j++) {
+                                        AbstractDungeon.effectList.add(new GainPennyEffect(dummyEntity, playerX, playerY, merchant.hb.cX, merchant.hb.cY, false));
+                                    }
+                                    // Finally apply punishment
+                                    AbstractDungeon.player.loseGold(AbstractDungeon.player.gold);
+                                    break;
+                                case 1:
+                                    // Sfx
+                                    CardCrawlGame.sound.play("BELL");
+                                    CardGroup cardGroup = new CardGroup(CardGroup.CardGroupType.UNSPECIFIED);
+                                    for (int j = 0; j < 2; j++) {
+                                        cardGroup.addToBottom(AbstractDungeon.returnRandomCurse());
+                                    }
+                                    AbstractDungeon.gridSelectScreen.openConfirmationGrid(cardGroup, "You shoplifted!");
+                                    break;
+                            }
+                        }
+                        isPunishmentIssued = true;
+                    }
                 }
             }
         }
@@ -346,7 +392,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         )
         public static SpireReturn<Void> Insert2(Merchant __instance) {
             // Play custom merchant dialogue
-            if (isKickedOut) {
+            if (isKickedOut && !isPunishmentIssued) {
                 playCustomMerchantDialogue(FORBID_DIALOGUE);
             }
             // Exit the method early
@@ -384,6 +430,9 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         public static void Postfix(AbstractDungeon __instance, SaveFile saveFile) {
             if (isKickedOut) {
                 isKickedOut = false;
+            }
+            if(isPunishmentIssued){
+                isPunishmentIssued = false;
             }
         }
     }
