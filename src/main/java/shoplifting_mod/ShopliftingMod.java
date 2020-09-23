@@ -323,7 +323,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                 ReflectionHacks.setPrivate(__instance, Merchant.class, "speechTimer", speechTimer);
 
                 // Use our own speech timer
-                if (!isDialogueFinished()) {
+                if (currentDialogueTime > 0) {
                     // Update timer
                     currentDialogueTime -= Gdx.graphics.getDeltaTime();
                 } else {
@@ -378,7 +378,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         @SpireInsertPatch(
                 locator = MerchantClickedLocator.class
         )
-        public static SpireReturn<Void> Insert(Merchant __instance) {
+        public static SpireReturn<Void> Insert2(Merchant __instance) {
             // Play custom merchant dialogue once clicked and after punishment was issued
             if (isKickedOut && isPunishmentIssued && isDialogueFinished()) {
                 enqueueMerchantDialogue(FORBID_DIALOGUE_POOL, 5f);
@@ -406,7 +406,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
      * @return
      */
     private static boolean isDialogueFinished(){
-        return currentDialogueTime <= 0;
+        return currentDialogueTime <= 0 && dialogueQueue.isEmpty();
     }
 
     // Reset everything once we enter a new room
@@ -429,23 +429,16 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         }
     }
 
-    // Prevent clicking proceed button while dialogue in progress
+    // Hide proceed button while dialogue in progress
     @SpirePatch(
             clz = ProceedButton.class,
             method = "update"
     )
     public static class DisableProceedButtonPatch {
-        @SpireInsertPatch(
-                locator = ProceedButtonClickedLocator.class
-        )
-        public static SpireReturn<Void> Insert(ProceedButton __instance) {
-            return !isPunishmentIssued && !isDialogueFinished() ? SpireReturn.Return(null) : SpireReturn.Continue();
-        }
-
-        private static class ProceedButtonClickedLocator extends SpireInsertLocator {
-            public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
-                Matcher matcher = new Matcher.MethodCallMatcher(AbstractDungeon.class, "getCurrRoom");
-                return LineFinder.findInOrder(ctMethodToPatch, matcher);
+        @SpirePrefixPatch
+        public static void Prefix(ProceedButton __instance){
+            if(!isDialogueFinished() && !isPunishmentIssued){
+                __instance.hide();
             }
         }
     }
