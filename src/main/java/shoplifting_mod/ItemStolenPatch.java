@@ -1,5 +1,6 @@
 package shoplifting_mod;
 
+import com.badlogic.gdx.graphics.Color;
 import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
 import com.megacrit.cardcrawl.cards.AbstractCard;
@@ -10,6 +11,7 @@ import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
 import com.megacrit.cardcrawl.vfx.DarkSmokePuffEffect;
+import com.megacrit.cardcrawl.vfx.TextAboveCreatureEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import javassist.expr.ExprEditor;
@@ -81,14 +83,9 @@ public class ItemStolenPatch {
                 sb.append(CardCrawlGame.class.getName());
                 sb.append(".sound.play(\"GOLD_JINGLE\");");
                 // Play smoke vfx at the saved x and y
-                sb.append(AbstractDungeon.class.getName());
-                sb.append(".topLevelEffectsQueue.add(new ");
-                sb.append(DarkSmokePuffEffect.class.getName());
-                sb.append("(");
-                sb.append(ShopliftingMod.class.getName());
-                sb.append(".prevItemX, ");
-                sb.append(ShopliftingMod.class.getName());
-                sb.append(".prevItemY));");
+                addPlayEffectExpr(sb, DarkSmokePuffEffect.class);
+                // Play "Stolen card" text effect
+                addPlayEffectExpr(sb, TextAboveCreatureEffect.class);
                 // Reset flag
                 sb.append(ShopliftingMod.class.getName());
                 sb.append(".resetFlag();");
@@ -104,6 +101,27 @@ public class ItemStolenPatch {
             }
             sb.append("}");
             return sb.toString();
+        }
+
+        /**
+         * Plays an effect at the coordinates where item was stolen
+         * @param effectClass the type of effect being played
+         */
+        private static void addPlayEffectExpr(StringBuilder sb, Class<?> effectClass){
+            sb.append(AbstractDungeon.class.getName());
+            sb.append(".topLevelEffectsQueue.add(new ");
+            sb.append(effectClass.getName());
+            sb.append("(");
+            sb.append(ShopliftingMod.class.getName());
+            sb.append(".prevItemX, ");
+            sb.append(ShopliftingMod.class.getName());
+            sb.append(".prevItemY");
+            if(effectClass == TextAboveCreatureEffect.class){
+                sb.append(",\"Item stolen!\", ");
+                sb.append(Color.class.getName());
+                sb.append(".WHITE");
+            }
+            sb.append("));");
         }
 
         /**
