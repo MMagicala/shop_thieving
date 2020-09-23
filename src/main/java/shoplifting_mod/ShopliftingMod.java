@@ -76,10 +76,10 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         CURSES("May this curse stick with you for the rest of your journey..."),
         LOSE_ALL_GOLD("You tried to steal from me. Now I will do the same to you...");
 
-        String[] dialoguePool;
+        final List<String> dialoguePool;
 
         Punishment(String... dialoguePool) {
-            this.dialoguePool = dialoguePool;
+            this.dialoguePool = Arrays.asList(dialoguePool);
         }
     }
 
@@ -92,8 +92,19 @@ public class ShopliftingMod implements PostInitializeSubscriber {
 
     // Merchant dialogue
     private static float currentDialogueTime;
-    private static final String[] CAUGHT_DIALOGUE_POOL = {"Thief!", "Hey! No stealing!", "Do you want me to kick you out?"};
-    private static final String[] FORBID_DIALOGUE_POOL = {"Don't come into my shop again!", "Screw off!"};
+    private static final ArrayList<String> CAUGHT_DIALOGUE_POOL = new ArrayList<String>() {
+        {
+            add("Thief!");
+            add("Hey! No stealing!");
+            add("Do you want me to kick you out?");
+        }
+    };
+    private static final ArrayList<String> FORBID_DIALOGUE_POOL = new ArrayList<String>() {
+        {
+            add("Don't come into my shop again!");
+            add("Screw off!");
+        }
+    };
 
     private static final LinkedList<Dialogue> dialogueQueue = new LinkedList<>();
 
@@ -103,11 +114,15 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         private final String text;
         private final float duration;
 
-        public Dialogue(float x, float y, String text, float duration) {
+        public Dialogue(float x, float y, String text, float duration, boolean playDarkEffect) {
             this.x = x;
             this.y = y;
             this.text = text;
             this.duration = duration;
+        }
+
+        public Dialogue(float x, float y, String text, float duration) {
+            this(x, y, text, duration, false);
         }
     }
 
@@ -333,6 +348,10 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                         assert dialogue != null;
                         AbstractDungeon.effectList.add(new SpeechBubble(dialogue.x, dialogue.y, 3.0F,
                                 dialogue.text, false));
+
+                        // Play any appropriate effects for the impending punishment
+
+
                         // Reset timer for the duration of the dialogue
                         currentDialogueTime = dialogue.duration;
                     } else if (!isPunishmentIssued) {
@@ -395,17 +414,18 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         }
     }
 
-    private static void enqueueMerchantDialogue(String[] dialogue, float duration) {
+    private static void enqueueMerchantDialogue(List<String> dialogue, float duration) {
         Merchant merchant = ((ShopRoom) (AbstractDungeon.getCurrRoom())).merchant;
-        int index = random.nextInt(dialogue.length);
-        dialogueQueue.add(new Dialogue(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, dialogue[index], duration));
+        int index = random.nextInt(dialogue.size());
+        dialogueQueue.add(new Dialogue(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, dialogue.get(index), duration));
     }
 
     /**
      * Determines if shopkeeper has stopped talking or not
+     *
      * @return
      */
-    private static boolean isDialogueFinished(){
+    private static boolean isDialogueFinished() {
         return currentDialogueTime <= 0 && dialogueQueue.isEmpty();
     }
 
@@ -436,8 +456,8 @@ public class ShopliftingMod implements PostInitializeSubscriber {
     )
     public static class DisableProceedButtonPatch {
         @SpirePrefixPatch
-        public static void Prefix(ProceedButton __instance){
-            if(!isDialogueFinished() && !isPunishmentIssued){
+        public static void Prefix(ProceedButton __instance) {
+            if (!isDialogueFinished() && !isPunishmentIssued) {
                 __instance.hide();
             }
         }
