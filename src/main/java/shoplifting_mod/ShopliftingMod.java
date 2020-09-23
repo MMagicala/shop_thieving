@@ -267,7 +267,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                 List<Punishment> punishmentPool = Arrays.asList(Punishment.values());
                 int bound = punishmentPool.size();
                 // Don't include lose all gold punishment if player has <100 gold
-                if(AbstractDungeon.player.gold < 100){
+                if (AbstractDungeon.player.gold < 100) {
                     bound--;
                 }
                 int randomIndex = random.nextInt(bound);

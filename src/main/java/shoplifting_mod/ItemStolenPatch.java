@@ -68,7 +68,8 @@ public class ItemStolenPatch {
 
         /**
          * Generates a code expression for each item class
-         * @param fileName Identifies the type of item
+         *
+         * @param fileName   Identifies the type of item
          * @param methodName
          * @return
          */
@@ -105,9 +106,10 @@ public class ItemStolenPatch {
 
         /**
          * Plays an effect at the coordinates where item was stolen
+         *
          * @param effectClass the type of effect being played
          */
-        private static void addPlayEffectExpr(StringBuilder sb, Class<?> effectClass){
+        private static void addPlayEffectExpr(StringBuilder sb, Class<?> effectClass) {
             sb.append(AbstractDungeon.class.getName());
             sb.append(".topLevelEffectsQueue.add(new ");
             sb.append(effectClass.getName());
@@ -116,7 +118,7 @@ public class ItemStolenPatch {
             sb.append(".prevItemX, ");
             sb.append(ShopliftingMod.class.getName());
             sb.append(".prevItemY");
-            if(effectClass == TextAboveCreatureEffect.class){
+            if (effectClass == TextAboveCreatureEffect.class) {
                 sb.append(",\"Item stolen!\", ");
                 sb.append(Color.class.getName());
                 sb.append(".WHITE");
@@ -126,9 +128,10 @@ public class ItemStolenPatch {
 
         /**
          * Generates code expression to save the coordinates of an item
+         *
          * @param sb
          * @param propertyPrefix identifies the item's property name
-         * @param isUppercase determines case for x and y in property name. If false, lowercase
+         * @param isUppercase    determines case for x and y in property name. If false, lowercase
          */
         private static void addSaveCoordinatesExpr(StringBuilder sb, String propertyPrefix, boolean isUppercase) {
             char uppercaseCoordinate = 'X';
@@ -152,7 +155,7 @@ public class ItemStolenPatch {
             clz = StorePotion.class,
             method = "purchasePotion"
     )
-    public static class SavePotionCoordinatePatch{
+    public static class SavePotionCoordinatePatch {
         private static class PotionBeforeMoveLocator extends SpireInsertLocator {
             public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
                 Matcher matcher = new Matcher.MethodCallMatcher(AbstractPlayer.class, "obtainPotion");
@@ -163,7 +166,7 @@ public class ItemStolenPatch {
         @SpireInsertPatch(
                 locator = PotionBeforeMoveLocator.class
         )
-        public static void Insert(StorePotion __instance){
+        public static void Insert(StorePotion __instance) {
             ShopliftingMod.prevItemX = __instance.potion.posX;
             ShopliftingMod.prevItemY = __instance.potion.posY;
         }
