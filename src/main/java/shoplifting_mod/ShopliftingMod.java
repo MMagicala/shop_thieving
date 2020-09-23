@@ -121,6 +121,10 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         BaseMod.subscribe(new ShopliftingMod());
     }
 
+    public static boolean isConfigKeyPressed(){
+        return Gdx.input.isKeyPressed(config.getInt(HOTKEY_KEY));
+    }
+
     @Override
     public void receivePostInitialize() {
         // Define default properties
@@ -222,7 +226,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         } else if (__instance instanceof ShopScreen) {
             itemPrice = hoveredCard.price;
         }
-        if (AbstractDungeon.player.gold < itemPrice && Gdx.input.isKeyPressed(config.getInt(HOTKEY_KEY))) {
+        if (AbstractDungeon.player.gold < itemPrice && isConfigKeyPressed()) {
             // Attempt to steal the item
             float rollResult = random.nextFloat();
             if (rollResult < successRate) {
