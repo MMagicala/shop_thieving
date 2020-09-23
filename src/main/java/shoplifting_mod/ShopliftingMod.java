@@ -264,12 +264,12 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                 enqueueMerchantDialogue(CAUGHT_DIALOGUE_POOL, 2.5f);
 
                 // Randomly pick punishment in advance
-                List<Punishment> punishmentPool = Arrays.asList(Punishment.values());
-                int bound = punishmentPool.size();
+                ArrayList<Punishment> punishmentPool = new ArrayList<>(Arrays.asList(Punishment.values()));
                 // Don't include lose all gold punishment if player has <100 gold
-                if (AbstractDungeon.player.gold < 100) {
-                    bound--;
+                if (AbstractDungeon.player.gold < 99) {
+                    punishmentPool.remove(Punishment.LOSE_ALL_GOLD);
                 }
+                int bound = punishmentPool.size();
                 int randomIndex = random.nextInt(bound);
                 decidedPunishment = punishmentPool.get(randomIndex);
 
@@ -346,7 +346,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                                 float playerY = AbstractDungeon.player.hb.cY;
                                 DummyEntity dummyEntity = new DummyEntity();
                                 for (int j = 0; j < AbstractDungeon.player.gold; j++) {
-                                    AbstractDungeon.effectList.add(new GainPennyEffect(dummyEntity, playerX, playerY, merchant.hb.cX, merchant.hb.cY, true));
+                                    AbstractDungeon.effectList.add(new GainPennyEffect(dummyEntity, playerX, playerY, merchant.hb.cX, merchant.hb.cY, false));
                                 }
                                 // Apply
                                 AbstractDungeon.player.loseGold(AbstractDungeon.player.gold);
