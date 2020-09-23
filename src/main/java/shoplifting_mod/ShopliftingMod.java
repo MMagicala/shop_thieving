@@ -405,7 +405,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
      * Determines if shopkeeper has stopped talking or not
      * @return
      */
-    private static boolean isDialogueFinished(){
+    public static boolean isDialogueFinished(){
         return currentDialogueTime <= 0 && dialogueQueue.isEmpty();
     }
 
