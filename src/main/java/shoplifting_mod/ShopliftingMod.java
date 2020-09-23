@@ -91,7 +91,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
     private static final float BUTTON_LABEL_Y = 700.0f;
 
     // Merchant dialogue
-    private static float currentDialogueTime = -1;
+    private static float currentDialogueTime;
     private static final String[] CAUGHT_DIALOGUE_POOL = {"Thief!", "Hey! No stealing!", "Do you want me to kick you out?"};
     private static final String[] FORBID_DIALOGUE_POOL = {"Don't come into my shop again!", "Screw off!"};
 
@@ -323,7 +323,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                 ReflectionHacks.setPrivate(__instance, Merchant.class, "speechTimer", speechTimer);
 
                 // Use our own speech timer
-                if (currentDialogueTime > 0) {
+                if (!isDialogueFinished()) {
                     // Update timer
                     currentDialogueTime -= Gdx.graphics.getDeltaTime();
                 } else {
@@ -380,8 +380,8 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         )
         public static SpireReturn<Void> Insert(Merchant __instance) {
             // Play custom merchant dialogue once clicked and after punishment was issued
-            if (isKickedOut && isPunishmentIssued) {
-                playCustomMerchantDialogue(FORBID_DIALOGUE_POOL);
+            if (isKickedOut && isPunishmentIssued && isDialogueFinished()) {
+                enqueueMerchantDialogue(FORBID_DIALOGUE_POOL, 5f);
             }
             // Exit the method early
             return isKickedOut ? SpireReturn.Return(null) : SpireReturn.Continue();
@@ -401,13 +401,15 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         dialogueQueue.add(new Dialogue(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, dialogue[index], duration));
     }
 
-    private static void playCustomMerchantDialogue(String[] dialogue) {
-        Merchant merchant = ((ShopRoom) (AbstractDungeon.getCurrRoom())).merchant;
-        int index = random.nextInt(dialogue.length);
-        AbstractDungeon.effectList.add(new SpeechBubble(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, 3.0F, dialogue[index], false));
+    /**
+     * Determines if shopkeeper has stopped talking or not
+     * @return
+     */
+    private static boolean isDialogueFinished(){
+        return currentDialogueTime <= 0;
     }
 
-    // Reset kicked out flag
+    // Reset everything once we enter a new room
     @SpirePatch(
             clz = AbstractDungeon.class,
             method = "nextRoomTransition",
@@ -422,6 +424,8 @@ public class ShopliftingMod implements PostInitializeSubscriber {
             if (isPunishmentIssued) {
                 isPunishmentIssued = false;
             }
+            currentDialogueTime = 0;
+            dialogueQueue.clear();
         }
     }
 
@@ -435,7 +439,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                 locator = ProceedButtonClickedLocator.class
         )
         public static SpireReturn<Void> Insert(ProceedButton __instance) {
-            return currentDialogueTime > 0 ? SpireReturn.Return(null) : SpireReturn.Continue();
+            return !isPunishmentIssued && !isDialogueFinished() ? SpireReturn.Return(null) : SpireReturn.Continue();
         }
 
         private static class ProceedButtonClickedLocator extends SpireInsertLocator {
