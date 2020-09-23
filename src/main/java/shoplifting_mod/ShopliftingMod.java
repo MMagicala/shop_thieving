@@ -44,6 +44,7 @@ import com.megacrit.cardcrawl.shop.Merchant;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
+import com.megacrit.cardcrawl.ui.buttons.ProceedButton;
 import com.megacrit.cardcrawl.vfx.SpeechBubble;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
@@ -284,10 +285,8 @@ public class ShopliftingMod implements PostInitializeSubscriber {
                     assert dialogue != null;
                     AbstractDungeon.effectList.add(new SpeechBubble(dialogue.x, dialogue.y, 3.0F,
                             dialogue.text, false));
-                    // Reset timer for the next dialogue
-                    if (!dialogueQueue.isEmpty()) {
-                        currentDialogueTime = DIALOGUE_TIME;
-                    }
+                    // Reset timer for the duration of the dialogue
+                    currentDialogueTime = DIALOGUE_TIME;
                 }
             }
         }
@@ -329,5 +328,41 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         Merchant merchant = ((ShopRoom) (AbstractDungeon.getCurrRoom())).merchant;
         int index = random.nextInt(dialogue.length);
         AbstractDungeon.effectList.add(new SpeechBubble(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, 3.0F, dialogue[index], false));
+    }
+
+    // Reset kicked out flag
+    @SpirePatch(
+            clz = AbstractDungeon.class,
+            method = "nextRoomTransition",
+            paramtypez = {SaveFile.class}
+    )
+    public static class NextRoomTransitionPatch {
+        @SpirePostfixPatch
+        public static void Postfix(AbstractDungeon __instance, SaveFile saveFile) {
+            if (isKickedOut) {
+                isKickedOut = false;
+            }
+        }
+    }
+
+    // Prevent clicking proceed button while dialogue in progress
+    @SpirePatch(
+            clz = ProceedButton.class,
+            method = "update"
+    )
+    public static class DisableProceedButtonPatch {
+        @SpireInsertPatch(
+                locator = ProceedButtonClickedLocator.class
+        )
+        public static SpireReturn<Void> Insert(ProceedButton __instance) {
+            return currentDialogueTime > 0 ? SpireReturn.Return(null) : SpireReturn.Continue();
+        }
+
+        private static class ProceedButtonClickedLocator extends SpireInsertLocator {
+            public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
+                Matcher matcher = new Matcher.MethodCallMatcher(AbstractDungeon.class, "getCurrRoom");
+                return LineFinder.findInOrder(ctMethodToPatch, matcher);
+            }
+        }
     }
 }
