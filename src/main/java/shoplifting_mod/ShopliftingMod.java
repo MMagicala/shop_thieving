@@ -218,14 +218,7 @@ public class ShopliftingMod implements PostInitializeSubscriber {
      * @return
      */
     private static SpireReturn<Void> CommonInsert(Object __instance, AbstractCard hoveredCard) {
-        int itemPrice = -1;
-        if (__instance instanceof StoreRelic) {
-            itemPrice = ((StoreRelic) __instance).price;
-        } else if (__instance instanceof StorePotion) {
-            itemPrice = ((StorePotion) __instance).price;
-        } else if (__instance instanceof ShopScreen) {
-            itemPrice = hoveredCard.price;
-        }
+        int itemPrice = getItemPrice(__instance, hoveredCard);
         if (AbstractDungeon.player.gold < itemPrice && isConfigKeyPressed()) {
             // Attempt to steal the item
             float rollResult = random.nextFloat();
@@ -287,6 +280,18 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         }
         // Hotkey not pressed, return to normal
         return SpireReturn.Continue();
+    }
+
+    public static int getItemPrice(Object __instance, AbstractCard hoveredCard){
+        int itemPrice = -1;
+        if (__instance instanceof StoreRelic) {
+            itemPrice = ((StoreRelic) __instance).price;
+        } else if (__instance instanceof StorePotion) {
+            itemPrice = ((StorePotion) __instance).price;
+        } else if (__instance instanceof ShopScreen) {
+            itemPrice = hoveredCard.price;
+        }
+        return itemPrice;
     }
 
     private static class DummyEntity extends AbstractCreature {

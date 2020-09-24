@@ -23,13 +23,23 @@ import javassist.CtBehavior;
 
 public class ItemHoverPatch {
     private static boolean itemHovered = false;
-
+    private static boolean canAffordItem = false;
     // Show tooltip above a hovered item if hotkey is pressed
 
     @SpirePatch(
             clz = ShopScreen.class,
             method = "update"
     )
+    public static class HoverCardPatch {
+        @SpireInsertPatch(
+                locator = ItemHoveredLocator.class,
+                localvars = {"hoveredCard"}
+        )
+        public static void Insert(Object __instance, AbstractCard hoveredCard) {
+            CommonInsert(__instance, hoveredCard);
+        }
+    }
+
     @SpirePatch(
             clz = StoreRelic.class,
             method = "update"
@@ -38,13 +48,21 @@ public class ItemHoverPatch {
             clz = StorePotion.class,
             method = "update"
     )
-    public static class SetHoverFlagPatch {
+    public static class HoverPotionAndRelicPatch {
         @SpireInsertPatch(
                 locator = ItemHoveredLocator.class
         )
         public static void Insert(Object __instance) {
-            if (ShopliftingMod.isConfigKeyPressed()) {
-                itemHovered = true;
+            CommonInsert(__instance, null);
+        }
+    }
+
+    private static void CommonInsert(Object __instance, AbstractCard hoveredCard) {
+        if (ShopliftingMod.isConfigKeyPressed()) {
+            itemHovered = true;
+            int itemPrice = ShopliftingMod.getItemPrice(__instance, hoveredCard);
+            if (AbstractDungeon.player.gold >= itemPrice) {
+                canAffordItem = true;
             }
         }
     }
@@ -70,16 +88,17 @@ public class ItemHoverPatch {
 */
 
         @SpireInsertPatch(
-                locator=RenderBlackScreenLocator.class
+                locator = RenderBlackScreenLocator.class
         )
         public static void InsertAfterBlackFadeScreen(CardCrawlGame __instance) {
-            if (itemHovered) {
+            if (itemHovered && !canAffordItem) {
                 float x = InputHelper.mX;
                 float y = InputHelper.mY - 64;
-                SpriteBatch sb = (SpriteBatch)ReflectionHacks.getPrivate(__instance, CardCrawlGame.class, "sb");
+                SpriteBatch sb = (SpriteBatch) ReflectionHacks.getPrivate(__instance, CardCrawlGame.class, "sb");
                 FontHelper.renderFontLeft(sb, FontHelper.bannerFont, "Steal item?", x, y, Color.WHITE);
-                itemHovered = false;
             }
+            itemHovered = false;
+            canAffordItem = false;
         }
 
         // Locators
