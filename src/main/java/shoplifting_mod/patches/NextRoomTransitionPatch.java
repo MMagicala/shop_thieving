@@ -7,7 +7,6 @@ import com.megacrit.cardcrawl.saveAndContinue.SaveFile;
 import shoplifting_mod.CutsceneManager;
 import shoplifting_mod.PunishmentManager;
 import shoplifting_mod.ShopliftingManager;
-import shoplifting_mod.ShopliftingMod;
 
 // Reset everything once we enter a new room
 @SpirePatch(

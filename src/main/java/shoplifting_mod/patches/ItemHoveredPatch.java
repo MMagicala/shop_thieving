@@ -22,7 +22,6 @@ import shoplifting_mod.ShopliftingManager;
 import shoplifting_mod.ShopliftingMod;
 
 public class ItemHoveredPatch {
-    private static boolean showTooltip = false;
     private static Object highlightedItem;
     private static boolean renderHighlightedItem = false;
     // Hover over item listeners
@@ -63,7 +62,6 @@ public class ItemHoveredPatch {
             int itemPrice = ShopliftingManager.getItemPrice(item);
             if (AbstractDungeon.player.gold < itemPrice) {
                 // If we can't afford the item, show tooltip asking if we want to steal it
-                showTooltip = true;
                 highlightedItem = item;
             }
         }
@@ -117,7 +115,7 @@ public class ItemHoveredPatch {
         )
         public static void ShowDarkBackgroundPatch(CardCrawlGame __instance) {
             Color screenColor = (Color) ReflectionHacks.getPrivate(__instance, CardCrawlGame.class, "screenColor");
-            if (showTooltip) {
+            if (highlightedItem != null) {
                 if (screenColor.a < 0.5f) {
                     screenColor.a += Gdx.graphics.getDeltaTime()/FADE_DURATION;
                     if (screenColor.a > 0.5f) {
@@ -136,7 +134,7 @@ public class ItemHoveredPatch {
                 locator = PostRenderBlackScreenLocator.class
         )
         public static void RenderTooltipAndItem(CardCrawlGame __instance) {
-            if (showTooltip) {
+            if (highlightedItem != null) {
                 // Get sprite batch of CardCrawlGame
                 SpriteBatch sb = (SpriteBatch)ReflectionHacks.getPrivate(__instance, CardCrawlGame.class, "sb");
                 // Render the item after the dark background
@@ -154,7 +152,6 @@ public class ItemHoveredPatch {
                 FontHelper.renderFontLeft(sb, FontHelper.bannerFont, "Steal item?", x, y, Color.WHITE);
             }
             // Reset flags for next render cycle
-            showTooltip = false;
             renderHighlightedItem = false;
             highlightedItem = null;
         }

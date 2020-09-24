@@ -12,7 +12,6 @@ import com.megacrit.cardcrawl.vfx.GainPennyEffect;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Random;
 
 public class PunishmentManager {
     public static Punishment decidedPunishment;

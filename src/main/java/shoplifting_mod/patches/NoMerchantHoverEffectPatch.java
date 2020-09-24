@@ -8,7 +8,6 @@ import javassist.CannotCompileException;
 import javassist.expr.ExprEditor;
 import javassist.expr.FieldAccess;
 import shoplifting_mod.CutsceneManager;
-import shoplifting_mod.ShopliftingMod;
 
 @SpirePatch(
         clz = Merchant.class,
