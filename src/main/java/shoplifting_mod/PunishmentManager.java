@@ -49,7 +49,7 @@ public class PunishmentManager {
                 // Sfx and vfx
                 CardCrawlGame.sound.play("BELL");
                 CardGroup cardGroup = new CardGroup(CardGroup.CardGroupType.UNSPECIFIED);
-                for (int j = 0; j < 2; j++) {
+                for (int j = 0; j < 3; j++) {
                     cardGroup.addToBottom(AbstractDungeon.returnRandomCurse());
                 }
                 // Apply

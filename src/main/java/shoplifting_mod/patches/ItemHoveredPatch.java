@@ -11,6 +11,8 @@ import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
+import com.megacrit.cardcrawl.potions.AbstractPotion;
+import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
@@ -21,7 +23,8 @@ import shoplifting_mod.ShopliftingMod;
 
 public class ItemHoveredPatch {
     private static boolean showTooltip = false;
-
+    private static Object highlightedItem;
+    private static boolean renderHighlightedItem = false;
     // Hover over item listeners
 
     @SpirePatch(
@@ -31,10 +34,10 @@ public class ItemHoveredPatch {
     public static class HoverCardPatch {
         @SpireInsertPatch(
                 locator = ItemHoveredLocator.class,
-                localvars = {"hoveredCard"}
+                localvars = {"c"}
         )
-        public static void Insert(Object __instance, AbstractCard hoveredCard) {
-            CommonInsert(__instance, hoveredCard);
+        public static void Insert(Object __instance, AbstractCard c) {
+            CommonInsert(c);
         }
     }
 
@@ -51,16 +54,17 @@ public class ItemHoveredPatch {
                 locator = ItemHoveredLocator.class
         )
         public static void Insert(Object __instance) {
-            CommonInsert(__instance, null);
+            CommonInsert(__instance);
         }
     }
 
-    private static void CommonInsert(Object __instance, AbstractCard hoveredCard) {
+    private static void CommonInsert(Object item) {
         if (ShopliftingMod.isConfigKeyPressed()) {
-            int itemPrice = ShopliftingManager.getItemPrice(__instance, hoveredCard);
+            int itemPrice = ShopliftingManager.getItemPrice(item);
             if (AbstractDungeon.player.gold < itemPrice) {
                 // If we can't afford the item, show tooltip asking if we want to steal it
                 showTooltip = true;
+                highlightedItem = item;
             }
         }
     }
@@ -69,6 +73,32 @@ public class ItemHoveredPatch {
         public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
             Matcher matcher = new Matcher.MethodCallMatcher(ShopScreen.class, "moveHand");
             return LineFinder.findAllInOrder(ctMethodToPatch, matcher);
+        }
+    }
+
+    // Don't render the highlighted item before the black background
+    @SpirePatch(
+            clz = AbstractRelic.class,
+            method="renderWithoutAmount"
+    )
+    @SpirePatch(
+            clz = AbstractPotion.class,
+            method="shopRender"
+    )
+    @SpirePatch(
+            clz= AbstractCard.class,
+            method="render",
+            paramtypez={SpriteBatch.class}
+    )
+    public static class StopItemRenderPatch{
+        @SpirePrefixPatch
+        public static SpireReturn<Void> Prefix(Object __instance){
+            // Don't render before the dark background if this is the highlighted item
+            if(__instance == highlightedItem && !renderHighlightedItem){
+                return SpireReturn.Return(null);
+            }
+            // Otherwise render like normal
+            return SpireReturn.Continue();
         }
     }
 
@@ -81,7 +111,7 @@ public class ItemHoveredPatch {
         // How long it takes for dark background to fully show/hide
         private static final float FADE_DURATION = 0.5f;
 
-        // Show dark background
+        // Show dark background by changing its opacity
         @SpireInsertPatch(
                 locator = PreRenderBlackScreenLocator.class
         )
@@ -102,19 +132,31 @@ public class ItemHoveredPatch {
             }
         }
 
-        // Show tooltip
         @SpireInsertPatch(
                 locator = PostRenderBlackScreenLocator.class
         )
-        public static void ShowTooltipPatch(CardCrawlGame __instance) {
+        public static void RenderTooltipAndItem(CardCrawlGame __instance) {
             if (showTooltip) {
+                // Get sprite batch of CardCrawlGame
+                SpriteBatch sb = (SpriteBatch)ReflectionHacks.getPrivate(__instance, CardCrawlGame.class, "sb");
+                // Render the item after the dark background
+                renderHighlightedItem = true;
+                if (highlightedItem instanceof StoreRelic) {
+                    ((StoreRelic) highlightedItem).relic.renderWithoutAmount(sb, new Color(0.0F, 0.0F, 0.0F, 0.25F));
+                } else if (highlightedItem instanceof StorePotion) {
+                    ((StorePotion) highlightedItem).potion.shopRender(sb);
+                } else if (highlightedItem instanceof AbstractCard) {
+                    ((AbstractCard) highlightedItem).render(sb);
+                }
+                // Show tooltip
                 float x = InputHelper.mX;
                 float y = InputHelper.mY - 64;
-                SpriteBatch sb = (SpriteBatch) ReflectionHacks.getPrivate(__instance, CardCrawlGame.class, "sb");
                 FontHelper.renderFontLeft(sb, FontHelper.bannerFont, "Steal item?", x, y, Color.WHITE);
             }
             // Reset flags for next render cycle
             showTooltip = false;
+            renderHighlightedItem = false;
+            highlightedItem = null;
         }
 
         // Render locators

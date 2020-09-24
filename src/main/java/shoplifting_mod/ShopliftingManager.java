@@ -16,17 +16,15 @@ public class ShopliftingManager {
 
     /**
      * Determine the class of an item and get its price
-     * @param __instance Item
-     * @param hoveredCard Real item if __instance is the shop screen
      */
-    public static int getItemPrice(Object __instance, AbstractCard hoveredCard){
+    public static int getItemPrice(Object item){
         int itemPrice = -1;
-        if (__instance instanceof StoreRelic) {
-            itemPrice = ((StoreRelic) __instance).price;
-        } else if (__instance instanceof StorePotion) {
-            itemPrice = ((StorePotion) __instance).price;
-        } else if (__instance instanceof ShopScreen) {
-            itemPrice = hoveredCard.price;
+        if (item instanceof StoreRelic) {
+            itemPrice = ((StoreRelic) item).price;
+        } else if (item instanceof StorePotion) {
+            itemPrice = ((StorePotion) item).price;
+        } else if (item instanceof AbstractCard) {
+            itemPrice = ((AbstractCard)item).price;
         }
         return itemPrice;
     }

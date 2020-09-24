@@ -33,7 +33,7 @@ public class ItemClickedPatch {
                 localvars = {"hoveredCard"}
         )
         public static SpireReturn<Void> Insert(Object __instance, AbstractCard hoveredCard) {
-            return CommonInsert(__instance, hoveredCard);
+            return CommonInsert(hoveredCard);
         }
     }
 
@@ -50,7 +50,7 @@ public class ItemClickedPatch {
                 locator = ItemClickedLocator.class
         )
         public static SpireReturn<Void> Insert(Object __instance) {
-            return CommonInsert(__instance, null);
+            return CommonInsert(__instance);
         }
     }
 
@@ -67,12 +67,11 @@ public class ItemClickedPatch {
     }
 
     /**
-     * Issue punishment for getting caught or succeed in stealing the item
-     * @param __instance  the item being clicked on
-     * @param hoveredCard is null if the item is not a card
+     * Determines if player failed or succeeded in stealing an item
+     * @param item the item being clicked on
      */
-    private static SpireReturn<Void> CommonInsert(Object __instance, AbstractCard hoveredCard) {
-        int itemPrice = ShopliftingManager.getItemPrice(__instance, hoveredCard);
+    private static SpireReturn<Void> CommonInsert(Object item) {
+        int itemPrice = ShopliftingManager.getItemPrice(item);
         if (AbstractDungeon.player.gold < itemPrice && ShopliftingMod.isConfigKeyPressed()) {
             // Attempt to steal the item
             float rollResult = ShopliftingMod.random.nextFloat();
@@ -80,18 +79,18 @@ public class ItemClickedPatch {
                 // Success! Give the player enough money and purchase the item
                 AbstractDungeon.player.gold += itemPrice;
                 ShopliftingManager.isItemSuccessfullyStolen = true;
-                if (__instance instanceof StoreRelic) {
-                    ((StoreRelic) __instance).purchaseRelic();
-                } else if (__instance instanceof StorePotion) {
-                    ((StorePotion) __instance).purchasePotion();
-                } else if (__instance instanceof ShopScreen) {
+                if (item instanceof StoreRelic) {
+                    ((StoreRelic) item).purchaseRelic();
+                } else if (item instanceof StorePotion) {
+                    ((StorePotion) item).purchasePotion();
+                } else if (item instanceof AbstractCard) {
                     try {
                         Method purchaseCardMethod = ShopScreen.class.getDeclaredMethod("purchaseCard", AbstractCard.class);
                         if (!purchaseCardMethod.isAccessible()) {
                             purchaseCardMethod.setAccessible(true);
                         }
                         // Run the patched version of the purchase method
-                        purchaseCardMethod.invoke(__instance, hoveredCard);
+                        purchaseCardMethod.invoke(AbstractDungeon.shopScreen, item);
                     } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                         e.printStackTrace();
                     }
