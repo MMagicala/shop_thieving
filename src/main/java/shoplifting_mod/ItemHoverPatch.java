@@ -20,18 +20,55 @@ import javassist.CannotCompileException;
 import javassist.CtBehavior;
 
 public class ItemHoverPatch {
-    private static boolean itemHovered = false;
-
-    // Show tooltip above a hovered item if hotkey is pressed
+    // Play smoke effect around item when hovered
+    @SpirePatch(
+            clz = StoreRelic.class,
+            method = "update"
+    )
+    @SpirePatch(
+            clz = StorePotion.class,
+            method = "update"
+    )
+    public static class HoverPotionsAndRelicsPatch {
+        @SpireInsertPatch(
+                locator = ItemHoveredLocator.class
+        )
+        public static void Insert(Object __instance) {
+            if (ShopliftingMod.isConfigKeyPressed()) {
+                float x, y;
+                if (__instance instanceof StoreRelic) {
+                    x = ((StoreRelic) __instance).relic.currentX;
+                    y = ((StoreRelic) __instance).relic.currentY;
+                } else if (__instance instanceof StorePotion) {
+                    x = ((StorePotion) __instance).potion.posX;
+                    y = ((StorePotion) __instance).potion.posY;
+                }
+                // Play smoke effect
+                
+            }
+        }
+    }
 
     @SpirePatch(
             clz = ShopScreen.class,
             method = "update"
     )
-    @SpirePatch(
-            clz = StoreRelic.class,
-            method = "update"
-    )
+    public static class HoverCardsPatch {
+        @SpireInsertPatch(
+                locator = ItemHoveredLocator.class
+        )
+        public static void Insert(Object __instance) {
+        }
+    }
+
+            private static class ItemHoveredLocator extends SpireInsertLocator {
+        public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
+            Matcher matcher = new Matcher.MethodCallMatcher(ShopScreen.class, "moveHand");
+            return LineFinder.findAllInOrder(ctMethodToPatch, matcher);
+        }
+    }
+
+/*
     @SpirePatch(
             clz = StorePotion.class,
             method = "update"
@@ -46,11 +83,5 @@ public class ItemHoverPatch {
             }
         }
     }
-
-    private static class ItemHoveredLocator extends SpireInsertLocator {
-        public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
-            Matcher matcher = new Matcher.MethodCallMatcher(ShopScreen.class, "moveHand");
-            return LineFinder.findAllInOrder(ctMethodToPatch, matcher);
-        }
-    }
+*/
 }
