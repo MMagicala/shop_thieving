@@ -21,9 +21,11 @@ import com.megacrit.cardcrawl.shop.StoreRelic;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 
+import javax.smartcardio.Card;
+
 public class ItemHoverPatch {
-    private static boolean itemHovered = false;
-    private static boolean canAffordItem = false;
+    private static boolean showTooltip = false;
+    private static float savedScreenColorAlpha;
     // Show tooltip above a hovered item if hotkey is pressed
 
     @SpirePatch(
@@ -59,10 +61,9 @@ public class ItemHoverPatch {
 
     private static void CommonInsert(Object __instance, AbstractCard hoveredCard) {
         if (ShopliftingMod.isConfigKeyPressed()) {
-            itemHovered = true;
             int itemPrice = ShopliftingMod.getItemPrice(__instance, hoveredCard);
-            if (AbstractDungeon.player.gold >= itemPrice) {
-                canAffordItem = true;
+            if (AbstractDungeon.player.gold < itemPrice) {
+                showTooltip = true;
             }
         }
     }
@@ -76,47 +77,58 @@ public class ItemHoverPatch {
 
     @SpirePatch(clz = CardCrawlGame.class, method = "render")
     public static class RenderToolTipTextPatch {
-/*
+        private static final float FADE_DURATION = 0.5f;
         @SpireInsertPatch(
-                locator=DisplayCursorLocator.class
+                locator = PreRenderBlackScreenLocator.class
         )
-        public static void InsertBeforeBlackFadeScreen(CardCrawlGame __instance){
-            if (itemHovered) {
-                AbstractDungeon.overlayMenu.showBlackScreen();
+        public static void InsertBeforeBlackFadeScreen(CardCrawlGame __instance) {
+            Color screenColor = (Color) ReflectionHacks.getPrivate(__instance, CardCrawlGame.class, "screenColor");
+            if (showTooltip) {
+                savedScreenColorAlpha = screenColor.a;
+                if (screenColor.a < 0.5f) {
+                    screenColor.a += Gdx.graphics.getDeltaTime()/FADE_DURATION;
+                    if (screenColor.a > 0.5f) {
+                        screenColor.a = 0.5f;
+                    }
+                }
+            } else if (screenColor.a > 0f) {
+                screenColor.a -= Gdx.graphics.getDeltaTime()/FADE_DURATION;
+                if (screenColor.a < 0f) {
+                    screenColor.a = 0f;
+                }
             }
         }
-*/
 
         @SpireInsertPatch(
-                locator = RenderBlackScreenLocator.class
+                locator = PostRenderBlackScreenLocator.class
         )
         public static void InsertAfterBlackFadeScreen(CardCrawlGame __instance) {
-            if (itemHovered && !canAffordItem) {
+            if (showTooltip) {
                 float x = InputHelper.mX;
                 float y = InputHelper.mY - 64;
                 SpriteBatch sb = (SpriteBatch) ReflectionHacks.getPrivate(__instance, CardCrawlGame.class, "sb");
                 FontHelper.renderFontLeft(sb, FontHelper.bannerFont, "Steal item?", x, y, Color.WHITE);
             }
-            itemHovered = false;
-            canAffordItem = false;
+            // Restore defaults
+            showTooltip = false;
         }
 
         // Locators
 
-        private static class RenderBlackScreenLocator extends SpireInsertLocator {
+        private static class PreRenderBlackScreenLocator extends SpireInsertLocator {
             public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
                 Matcher matcher = new Matcher.MethodCallMatcher(CardCrawlGame.class, "renderBlackFadeScreen");
                 return LineFinder.findAllInOrder(ctMethodToPatch, matcher);
             }
         }
-/*
 
-        private static class DisplayCursorLocator extends SpireInsertLocator {
+        private static class PostRenderBlackScreenLocator extends SpireInsertLocator {
             public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
-                Matcher matcher = new Matcher.FieldAccessMatcher(CardCrawlGame.class, "displayCursor");
-                return LineFinder.findAllInOrder(ctMethodToPatch, matcher);
+                Matcher matcher = new Matcher.MethodCallMatcher(CardCrawlGame.class, "renderBlackFadeScreen");
+                int[] result = LineFinder.findAllInOrder(ctMethodToPatch, matcher);
+                result[0]++;
+                return result;
             }
         }
-*/
     }
 }
