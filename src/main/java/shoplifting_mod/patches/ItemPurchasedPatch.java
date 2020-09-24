@@ -1,4 +1,4 @@
-package shoplifting_mod;
+package shoplifting_mod.patches;
 
 import com.badlogic.gdx.graphics.Color;
 import com.evacipated.cardcrawl.modthespire.lib.*;
@@ -16,10 +16,13 @@ import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
+import shoplifting_mod.ShopliftingManager;
+import shoplifting_mod.ShopliftingMod;
 
 import java.util.ArrayList;
 
-public class ItemStolenPatch {
+// Patch purchase item methods
+public class ItemPurchasedPatch {
     @SpirePatch(
             clz = ShopScreen.class,
             method = "purchaseCard"
@@ -41,7 +44,7 @@ public class ItemStolenPatch {
                 add("createSpeech");
             }
         };
-        private static boolean isCreateSpeechPatched = false;
+        private static boolean isCreateSpeechMethodPatched = false;
         private static String savedFileName = null;
 
         public static ExprEditor Instrument() {
@@ -49,17 +52,19 @@ public class ItemStolenPatch {
                 @Override
                 public void edit(MethodCall m) throws CannotCompileException {
                     String currentFileName = m.getFileName();
+                    // Determine if patching a new class
                     if (savedFileName == null || !savedFileName.equals(m.getFileName())) {
                         savedFileName = currentFileName;
-                        // Reset flag since we're patching a new class
-                        isCreateSpeechPatched = false;
+                        // Reset flag for this class
+                        isCreateSpeechMethodPatched = false;
                     }
                     String methodName = m.getMethodName();
-                    if (METHOD_NAMES.contains(methodName) && !isCreateSpeechPatched) {
+                    // Only patch the methods we want
+                    if (METHOD_NAMES.contains(methodName) && !isCreateSpeechMethodPatched) {
                         m.replace(getExpr(currentFileName, methodName));
-                        // Don't patch any next createSpeech method calls
                         if (methodName.equals("createSpeech")) {
-                            isCreateSpeechPatched = true;
+                            // Don't patch any next createSpeech method calls
+                            isCreateSpeechMethodPatched = true;
                         }
                     }
                 }
@@ -67,7 +72,7 @@ public class ItemStolenPatch {
         }
 
         /**
-         * Generates a code expression for each item class
+         * Only play purchase item method's original code if we aren't stealing it
          *
          * @param fileName   Identifies the type of item
          * @param methodName
@@ -76,8 +81,8 @@ public class ItemStolenPatch {
         private static String getExpr(String fileName, String methodName) {
             StringBuilder sb = new StringBuilder();
             sb.append("if(!");
-            sb.append(ShopliftingMod.class.getName());
-            sb.append(".isItemStolen()){ $_ = $proceed($$);");
+            sb.append(ShopliftingManager.class.getName());
+            sb.append(".isItemSuccessfullyStolen){ $_ = $proceed($$);");
             if (methodName.equals("createSpeech")) {
                 sb.append("}else{");
                 // Play gold jingle and smoke sound
@@ -87,9 +92,9 @@ public class ItemStolenPatch {
                 addPlayEffectExpr(sb, DarkSmokePuffEffect.class);
                 // Play "Stolen card" text effect
                 addPlayEffectExpr(sb, TextAboveCreatureEffect.class);
-                // Reset flag
-                sb.append(ShopliftingMod.class.getName());
-                sb.append(".resetFlag();");
+                // Reset item successfully stolen flag
+                sb.append(ShopliftingManager.class.getName());
+                sb.append(".isItemSuccessfullyStolen = " + false + ";");
             } else if (methodName.equals("addShopPurchaseData")) {
                 // Save x and y for smoke fx later
                 sb.append("}else{");
@@ -114,9 +119,9 @@ public class ItemStolenPatch {
             sb.append(".topLevelEffectsQueue.add(new ");
             sb.append(effectClass.getName());
             sb.append("(");
-            sb.append(ShopliftingMod.class.getName());
+            sb.append(ShopliftingManager.class.getName());
             sb.append(".prevItemX, ");
-            sb.append(ShopliftingMod.class.getName());
+            sb.append(ShopliftingManager.class.getName());
             sb.append(".prevItemY");
             if (effectClass == TextAboveCreatureEffect.class) {
                 sb.append(",\"Item stolen!\", ");
@@ -137,7 +142,7 @@ public class ItemStolenPatch {
             char uppercaseCoordinate = 'X';
             char coordinate = isUppercase ? 'X' : 'x';
             for (int i = 0; i < 2; i++) {
-                sb.append(ShopliftingMod.class.getName());
+                sb.append(ShopliftingManager.class.getName());
                 sb.append(".prevItem");
                 sb.append(uppercaseCoordinate);
                 sb.append(" = ");
@@ -167,8 +172,8 @@ public class ItemStolenPatch {
                 locator = PotionBeforeMoveLocator.class
         )
         public static void Insert(StorePotion __instance) {
-            ShopliftingMod.prevItemX = __instance.potion.posX;
-            ShopliftingMod.prevItemY = __instance.potion.posY;
+            ShopliftingManager.prevItemX = __instance.potion.posX;
+            ShopliftingManager.prevItemY = __instance.potion.posY;
         }
     }
 }

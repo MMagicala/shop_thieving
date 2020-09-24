@@ -1,23 +1,20 @@
-package shoplifting_mod;
+package shoplifting_mod.patches;
 
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.*;
-import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
-import com.megacrit.cardcrawl.helpers.Hitbox;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.shop.Merchant;
 import javassist.CannotCompileException;
-import javassist.CtBehavior;
 import javassist.expr.ExprEditor;
 import javassist.expr.FieldAccess;
-import javassist.expr.MethodCall;
+import shoplifting_mod.CutsceneManager;
+import shoplifting_mod.ShopliftingMod;
 
 @SpirePatch(
         clz = Merchant.class,
         method = "render"
 )
-public class MerchantRenderPatch {
+public class NoMerchantHoverEffectPatch {
     private static boolean isCodePatched = false;
     public static ExprEditor Instrument() {
         return new ExprEditor() {
@@ -25,7 +22,7 @@ public class MerchantRenderPatch {
             public void edit(FieldAccess f) throws CannotCompileException {
                 // Don't show hover effect if a dialogue is in progress
                 if(f.getFieldName().equals("hovered") && !isCodePatched){
-                    f.replace("$_ = "+MerchantRenderPatch.class.getName()+".instrumentCondition();");
+                    f.replace("$_ = "+ NoMerchantHoverEffectPatch.class.getName()+".instrumentCondition();");
                     isCodePatched = true;
                 }
             }
@@ -33,6 +30,6 @@ public class MerchantRenderPatch {
     }
 
     public static boolean instrumentCondition(){
-        return ((ShopRoom)AbstractDungeon.getCurrRoom()).merchant.hb.hovered && ShopliftingMod.isDialogueFinished();
+        return ((ShopRoom)AbstractDungeon.getCurrRoom()).merchant.hb.hovered && CutsceneManager.isDialogueFinished();
     }
 }

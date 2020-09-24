@@ -1,4 +1,4 @@
-package shoplifting_mod;
+package shoplifting_mod.patches;
 
 import basemod.ReflectionHacks;
 import com.badlogic.gdx.Gdx;
@@ -8,25 +8,21 @@ import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
-import com.megacrit.cardcrawl.core.GameCursor;
-import com.megacrit.cardcrawl.core.OverlayMenu;
-import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
-import com.megacrit.cardcrawl.shop.Merchant;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
+import shoplifting_mod.ShopliftingManager;
+import shoplifting_mod.ShopliftingMod;
 
-import javax.smartcardio.Card;
-
-public class ItemHoverPatch {
+public class ItemHoveredPatch {
     private static boolean showTooltip = false;
-    private static float savedScreenColorAlpha;
-    // Show tooltip above a hovered item if hotkey is pressed
+
+    // Hover over item listeners
 
     @SpirePatch(
             clz = ShopScreen.class,
@@ -61,8 +57,9 @@ public class ItemHoverPatch {
 
     private static void CommonInsert(Object __instance, AbstractCard hoveredCard) {
         if (ShopliftingMod.isConfigKeyPressed()) {
-            int itemPrice = ShopliftingMod.getItemPrice(__instance, hoveredCard);
+            int itemPrice = ShopliftingManager.getItemPrice(__instance, hoveredCard);
             if (AbstractDungeon.player.gold < itemPrice) {
+                // If we can't afford the item, show tooltip asking if we want to steal it
                 showTooltip = true;
             }
         }
@@ -75,16 +72,22 @@ public class ItemHoverPatch {
         }
     }
 
-    @SpirePatch(clz = CardCrawlGame.class, method = "render")
-    public static class RenderToolTipTextPatch {
+    // Render effects when hotkey + hover
+    @SpirePatch(
+            clz = CardCrawlGame.class,
+            method = "render"
+    )
+    public static class RenderPatch {
+        // How long it takes for dark background to fully show/hide
         private static final float FADE_DURATION = 0.5f;
+
+        // Show dark background
         @SpireInsertPatch(
                 locator = PreRenderBlackScreenLocator.class
         )
-        public static void InsertBeforeBlackFadeScreen(CardCrawlGame __instance) {
+        public static void ShowDarkBackgroundPatch(CardCrawlGame __instance) {
             Color screenColor = (Color) ReflectionHacks.getPrivate(__instance, CardCrawlGame.class, "screenColor");
             if (showTooltip) {
-                savedScreenColorAlpha = screenColor.a;
                 if (screenColor.a < 0.5f) {
                     screenColor.a += Gdx.graphics.getDeltaTime()/FADE_DURATION;
                     if (screenColor.a > 0.5f) {
@@ -99,21 +102,22 @@ public class ItemHoverPatch {
             }
         }
 
+        // Show tooltip
         @SpireInsertPatch(
                 locator = PostRenderBlackScreenLocator.class
         )
-        public static void InsertAfterBlackFadeScreen(CardCrawlGame __instance) {
+        public static void ShowTooltipPatch(CardCrawlGame __instance) {
             if (showTooltip) {
                 float x = InputHelper.mX;
                 float y = InputHelper.mY - 64;
                 SpriteBatch sb = (SpriteBatch) ReflectionHacks.getPrivate(__instance, CardCrawlGame.class, "sb");
                 FontHelper.renderFontLeft(sb, FontHelper.bannerFont, "Steal item?", x, y, Color.WHITE);
             }
-            // Restore defaults
+            // Reset flags for next render cycle
             showTooltip = false;
         }
 
-        // Locators
+        // Render locators
 
         private static class PreRenderBlackScreenLocator extends SpireInsertLocator {
             public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
