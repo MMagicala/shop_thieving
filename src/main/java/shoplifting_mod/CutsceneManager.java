@@ -4,14 +4,19 @@ import basemod.ReflectionHacks;
 import com.badlogic.gdx.Gdx;
 import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
+import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
+import com.megacrit.cardcrawl.cutscenes.Cutscene;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.shop.Merchant;
 import com.megacrit.cardcrawl.ui.buttons.ProceedButton;
+import com.megacrit.cardcrawl.ui.panels.TopPanel;
 import com.megacrit.cardcrawl.vfx.SpeechBubble;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
+import javassist.expr.ExprEditor;
+import javassist.expr.MethodCall;
 
 import java.util.LinkedList;
 
@@ -42,10 +47,30 @@ public class CutsceneManager {
     )
     public static class DisableProceedButtonPatch {
         @SpirePrefixPatch
-        public static void Prefix(ProceedButton __instance){
-            if(!isDialogueFinished() && !PunishmentManager.isPunishmentIssued){
+        public static void Prefix(ProceedButton __instance) {
+            // TODO: improve logic
+            if (ShopliftingManager.isKickedOut && !PunishmentManager.isPunishmentIssued) {
                 __instance.hide();
             }
+        }
+    }
+
+    // Prevent opening map screen while dialogue in progress
+    @SpirePatch(
+            clz = TopPanel.class,
+            method = "updateButtons"
+    )
+    public static class DisableMapButtonPatch {
+        public static ExprEditor Instrument() {
+            return new ExprEditor() {
+                @Override
+                public void edit(MethodCall m) throws CannotCompileException {
+                    if (m.getMethodName().equals("updateMapButtonLogic")) {
+                        m.replace("if(!" + ShopliftingManager.class.getName() + ".isKickedOut || " +
+                                PunishmentManager.class.getName() + ".isPunishmentIssued){$_ = $proceed($$);}");
+                    }
+                }
+            };
         }
     }
 
@@ -102,11 +127,11 @@ public class CutsceneManager {
     /**
      * Determines if shopkeeper has stopped talking or not
      */
-    public static boolean isDialogueFinished(){
+    public static boolean isDialogueFinished() {
         return currentDialogueTime <= 0 && dialogueQueue.isEmpty();
     }
 
-    public static void reset(){
+    public static void reset() {
         currentDialogueTime = 0;
         dialogueQueue.clear();
     }

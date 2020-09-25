@@ -49,7 +49,6 @@ public class ShopliftingMod implements PostInitializeSubscriber {
     private static final float BUTTON_LABEL_X = 475.0f;
     private static final float BUTTON_LABEL_Y = 700.0f;
 
-
     public ShopliftingMod() {
         System.out.println("Shoplifting Mod initialized");
     }

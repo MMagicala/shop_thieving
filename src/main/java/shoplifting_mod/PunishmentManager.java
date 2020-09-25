@@ -1,14 +1,19 @@
 package shoplifting_mod;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.evacipated.cardcrawl.modthespire.lib.*;
+import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
 import com.megacrit.cardcrawl.cards.CardGroup;
 import com.megacrit.cardcrawl.cards.DamageInfo;
 import com.megacrit.cardcrawl.core.AbstractCreature;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
+import com.megacrit.cardcrawl.screens.select.GridCardSelectScreen;
 import com.megacrit.cardcrawl.shop.Merchant;
 import com.megacrit.cardcrawl.vfx.GainPennyEffect;
+import javassist.CannotCompileException;
+import javassist.CtBehavior;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,6 +48,7 @@ public class PunishmentManager {
                 }
                 // Apply
                 AbstractDungeon.player.loseGold(AbstractDungeon.player.gold);
+                isPunishmentIssued = true;
                 break;
             case CURSES:
                 // Sfx and vfx
@@ -55,7 +61,6 @@ public class PunishmentManager {
                 AbstractDungeon.gridSelectScreen.openConfirmationGrid(cardGroup, "You shoplifted!");
                 break;
         }
-        isPunishmentIssued = true;
     }
 
     // This "entity" will receive the gold stolen from the player
@@ -68,6 +73,27 @@ public class PunishmentManager {
         @Override
         public void render(SpriteBatch spriteBatch) {
 
+        }
+    }
+
+    // Set punishment issued flag to true once curses are received
+    @SpirePatch(
+            clz = GridCardSelectScreen.class,
+            method="update"
+    )
+    public static class GridScreenConfirmPatch{
+        @SpireInsertPatch(
+                locator = CloseCurrentScreenLocator.class
+        )
+        public static void Insert(GridCardSelectScreen __instance){
+            isPunishmentIssued = true;
+        }
+
+        private static class CloseCurrentScreenLocator extends SpireInsertLocator {
+            public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
+                Matcher matcher = new Matcher.MethodCallMatcher(AbstractDungeon.class, "closeCurrentScreen");
+                return LineFinder.findInOrder(ctMethodToPatch, matcher);
+            }
         }
     }
 }
