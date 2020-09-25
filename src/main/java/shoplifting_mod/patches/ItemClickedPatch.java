@@ -7,9 +7,12 @@ import com.megacrit.cardcrawl.cards.DamageInfo;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
+import com.megacrit.cardcrawl.rooms.ShopRoom;
+import com.megacrit.cardcrawl.shop.Merchant;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
+import com.megacrit.cardcrawl.vfx.CollectorCurseEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import shoplifting_mod.*;
@@ -112,6 +115,9 @@ public class ItemClickedPatch {
                 // Load shopkeeper dialogue
                 CutsceneManager.enqueueMerchantDialogue(DialoguePool.CAUGHT.values, 2.5f);
                 CutsceneManager.enqueueMerchantDialogue(PunishmentManager.decidedPunishment.dialoguePool, 3f);
+                // Add effects for punishment
+                Merchant merchant = ((ShopRoom) (AbstractDungeon.getCurrRoom())).merchant;
+                CutsceneManager.addEffect(new CollectorCurseEffect(merchant.hb.cX, merchant.hb.cY), 2.5f);
             }
 
             // Return early

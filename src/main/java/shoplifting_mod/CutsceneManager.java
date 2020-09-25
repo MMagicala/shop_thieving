@@ -4,25 +4,25 @@ import basemod.ReflectionHacks;
 import com.badlogic.gdx.Gdx;
 import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
-import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
-import com.megacrit.cardcrawl.cutscenes.Cutscene;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.shop.Merchant;
 import com.megacrit.cardcrawl.ui.buttons.ProceedButton;
 import com.megacrit.cardcrawl.ui.panels.TopPanel;
+import com.megacrit.cardcrawl.vfx.AbstractGameEffect;
 import com.megacrit.cardcrawl.vfx.SpeechBubble;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class CutsceneManager {
     private static final LinkedList<Dialogue> dialogueQueue = new LinkedList<>();
-    private static float currentDialogueTime;
+    private static float currentDialogueTimeLeft;
 
     // Merchant dialogue
 
@@ -37,6 +37,21 @@ public class CutsceneManager {
             this.y = y;
             this.text = text;
             this.duration = duration;
+        }
+    }
+
+    private static final ArrayList<Effect> effectsToPlay = new ArrayList<>();
+    private static float totalDialogueTimeElapsed;
+
+    // effects that play during dialogue
+    private static class Effect{
+        // When to play the effect once dialogue starts
+        private final float time;
+        private final AbstractGameEffect effect;
+
+        public Effect(AbstractGameEffect effect, float time) {
+            this.effect = effect;
+            this.time = time;
         }
     }
 
@@ -90,9 +105,9 @@ public class CutsceneManager {
                 speechTimer += Gdx.graphics.getDeltaTime();
                 ReflectionHacks.setPrivate(__instance, Merchant.class, "speechTimer", speechTimer);
 
-                if (currentDialogueTime > 0) {
+                if (currentDialogueTimeLeft > 0) {
                     // Update our own speech timer
-                    currentDialogueTime -= Gdx.graphics.getDeltaTime();
+                    currentDialogueTimeLeft -= Gdx.graphics.getDeltaTime();
                 } else {
                     if (!dialogueQueue.isEmpty()) {
                         // Once time runs out, make merchant talk
@@ -101,11 +116,31 @@ public class CutsceneManager {
                         AbstractDungeon.effectList.add(new SpeechBubble(dialogue.x, dialogue.y, 3.0F,
                                 dialogue.text, false));
                         // Reset timer
-                        currentDialogueTime = dialogue.duration;
-                    } else if (!PunishmentManager.isPunishmentIssued) {
-                        // After dialogue is finally completed, apply the punishment
-                        PunishmentManager.issuePunishment();
+                        currentDialogueTimeLeft = dialogue.duration;
+                    } else {
+                        // No more dialogue. Reset dialogue time elapsed
+                        totalDialogueTimeElapsed = 0;
+                        if (!PunishmentManager.isPunishmentIssued) {
+                            // Apply punishment if we haven't already
+                            PunishmentManager.issuePunishment();
+                        }
                     }
+                }
+                // Play enqueued effects at the right time
+                if(!isDialogueFinished()){
+                    totalDialogueTimeElapsed += Gdx.graphics.getDeltaTime();
+                    ArrayList<Effect> immediateEffects = new ArrayList<>();
+                    effectsToPlay.forEach((e) -> {
+                        if(e.time >= totalDialogueTimeElapsed){
+                            immediateEffects.add(e);
+                        }
+                    });
+
+                    effectsToPlay.removeAll(immediateEffects);
+
+                    immediateEffects.forEach((e) -> {
+                        AbstractDungeon.topLevelEffectsQueue.add(e.effect);
+                    });
                 }
             }
         }
@@ -125,14 +160,25 @@ public class CutsceneManager {
     }
 
     /**
+     * Add an effect to play during dialogue
+     * @param time When to play the effect since the dialogue has started
+     */
+    public static void addEffect(AbstractGameEffect effect, float time){
+        effectsToPlay.add(new Effect(effect, time));
+    }
+
+    /**
      * Determines if shopkeeper has stopped talking or not
      */
     public static boolean isDialogueFinished() {
-        return currentDialogueTime <= 0 && dialogueQueue.isEmpty();
+        return currentDialogueTimeLeft <= 0 && dialogueQueue.isEmpty();
     }
 
     public static void reset() {
-        currentDialogueTime = 0;
+        currentDialogueTimeLeft = 0;
+        totalDialogueTimeElapsed = 0;
+        // Clear queues
         dialogueQueue.clear();
+        effectsToPlay.clear();
     }
 }
