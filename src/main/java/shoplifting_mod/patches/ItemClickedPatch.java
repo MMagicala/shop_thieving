@@ -18,9 +18,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class ItemClickedPatch {
-    private static final float successRate = 0.5f;
-    private static final int damageAmount = 0;
-
     // Hotkey + click listeners
 
     @SpirePatch(
@@ -75,7 +72,7 @@ public class ItemClickedPatch {
         if (AbstractDungeon.player.gold < itemPrice && ShopliftingMod.isConfigKeyPressed()) {
             // Attempt to steal the item
             float rollResult = ShopliftingMod.random.nextFloat();
-            if (rollResult < successRate) {
+            if (rollResult < ShopliftingManager.successRate) {
                 // Success! Give the player enough money and purchase the item
                 AbstractDungeon.player.gold += itemPrice;
                 ShopliftingManager.isItemSuccessfullyStolen = true;
@@ -97,7 +94,7 @@ public class ItemClickedPatch {
                 }
             } else {
                 // Take damage if caught and play sound/vfx
-                AbstractDungeon.player.damage(new DamageInfo(null, damageAmount, DamageInfo.DamageType.NORMAL));
+                AbstractDungeon.player.damage(new DamageInfo(null, ShopliftingManager.damageAmount, DamageInfo.DamageType.NORMAL));
                 int coin = ShopliftingMod.random.nextInt(2);
                 String soundKey = coin == 1 ? "BLUNT_FAST" : "BLUNT_HEAVY";
                 CardCrawlGame.sound.play(soundKey);

@@ -1,7 +1,9 @@
 package shoplifting_mod.potions;
 
 import basemod.BaseMod;
+import basemod.abstracts.CustomBottleRelic;
 import basemod.abstracts.CustomPotion;
+import basemod.abstracts.CustomSavable;
 import basemod.abstracts.CustomSavableRaw;
 import com.google.gson.JsonElement;
 import com.megacrit.cardcrawl.actions.common.ApplyPowerAction;
@@ -14,6 +16,7 @@ import com.megacrit.cardcrawl.potions.AbstractPotion;
 import com.megacrit.cardcrawl.powers.LoseStrengthPower;
 import com.megacrit.cardcrawl.powers.StrengthPower;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
+import shoplifting_mod.ShopliftingManager;
 import shoplifting_mod.ShopliftingMod;
 
 public class ThievingPotion extends CustomPotion {
@@ -52,20 +55,7 @@ public class ThievingPotion extends CustomPotion {
 
     @Override
     public void use(AbstractCreature target) {
-/*        CustomSavableRaw saveField = new CustomSavableRaw() {
-            @Override
-            public JsonElement onSaveRaw() {
-                JsonElement jsonElement = new JsonElement();
-                return jsonElement;
-            }
-
-            @Override
-            public void onLoadRaw(JsonElement jsonElement) {
-
-            }
-        };
-        BaseMod.addSaveField("shopliftingSuccessRate", saveField);*/
-        AbstractDungeon.player.heal(20);
+        ShopliftingManager.successRate *= 2;
     }
 
     @Override
@@ -73,7 +63,6 @@ public class ThievingPotion extends CustomPotion {
         return new ThievingPotion();
     }
 
-    // This is your potency.
     @Override
     public int getPotency(final int potency) {
         return 2;
@@ -85,5 +74,4 @@ public class ThievingPotion extends CustomPotion {
         tips.clear();
         tips.add(new PowerTip(name, description));
     }
-
 }

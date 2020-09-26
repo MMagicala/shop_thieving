@@ -17,6 +17,7 @@ import shoplifting_mod.ShopliftingManager;
 public class NextRoomTransitionPatch {
     @SpirePostfixPatch
     public static void Postfix(AbstractDungeon __instance, SaveFile saveFile) {
+        // Reset flags
         if (ShopliftingManager.isKickedOut) {
             ShopliftingManager.isKickedOut = false;
         }
@@ -24,5 +25,8 @@ public class NextRoomTransitionPatch {
             PunishmentManager.isPunishmentIssued = false;
         }
         CutsceneManager.reset();
+
+        // Reset stats
+        ShopliftingManager.successRate = ShopliftingManager.BASE_SUCCESS_RATE;
     }
 }

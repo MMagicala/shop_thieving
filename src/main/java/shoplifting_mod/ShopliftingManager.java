@@ -13,6 +13,11 @@ public class ShopliftingManager {
     public static boolean isItemSuccessfullyStolen = false;
     public static boolean isKickedOut = false;
 
+    // Stats
+    public static float BASE_SUCCESS_RATE = 0.4f;
+    public static float successRate = BASE_SUCCESS_RATE;
+    public static final int damageAmount = 0;
+
     /**
      * Determine the class of an item and get its price
      */
