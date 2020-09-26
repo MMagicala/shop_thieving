@@ -35,7 +35,7 @@ public class ThievingPotion extends CustomPotion {
         potency = getPotency();
 
         // Initialize the description
-        description = DESCRIPTIONS[0] + DESCRIPTIONS[1];
+        description = DESCRIPTIONS[0];
 
         // Do you throw this potion at an enemy or do you just consume it.
         isThrown = false;
@@ -55,7 +55,7 @@ public class ThievingPotion extends CustomPotion {
 
     @Override
     public void use(AbstractCreature target) {
-        ShopliftingManager.successRate *= 2;
+        ShopliftingManager.successRateMultiplier *= 2;
     }
 
     @Override
@@ -68,10 +68,12 @@ public class ThievingPotion extends CustomPotion {
         return 2;
     }
 
+/*
     public void upgradePotion()
     {
         potency += 1;
         tips.clear();
         tips.add(new PowerTip(name, description));
     }
+*/
 }

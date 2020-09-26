@@ -59,11 +59,7 @@ public class ItemHoveredPatch {
 
     private static void CommonInsert(Object item) {
         if (ShopliftingMod.isConfigKeyPressed()) {
-            int itemPrice = ShopliftingManager.getItemPrice(item);
-            if (AbstractDungeon.player.gold < itemPrice) {
-                // If we can't afford the item, show tooltip asking if we want to steal it
-                highlightedItem = item;
-            }
+            highlightedItem = item;
         }
     }
 

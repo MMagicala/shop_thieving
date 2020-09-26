@@ -68,13 +68,12 @@ public class ItemClickedPatch {
      * @param item the item being clicked on
      */
     private static SpireReturn<Void> CommonInsert(Object item) {
-        int itemPrice = ShopliftingManager.getItemPrice(item);
-        if (AbstractDungeon.player.gold < itemPrice && ShopliftingMod.isConfigKeyPressed()) {
+        if (ShopliftingMod.isConfigKeyPressed()) {
             // Attempt to steal the item
             float rollResult = ShopliftingMod.random.nextFloat();
-            if (rollResult < ShopliftingManager.successRate) {
+            if (rollResult < ShopliftingManager.getItemSuccessRate(item)) {
                 // Success! Give the player enough money and purchase the item
-                AbstractDungeon.player.gold += itemPrice;
+                AbstractDungeon.player.gold += ShopliftingManager.getItemPrice(item);
                 ShopliftingManager.isItemSuccessfullyStolen = true;
                 if (item instanceof StoreRelic) {
                     ((StoreRelic) item).purchaseRelic();

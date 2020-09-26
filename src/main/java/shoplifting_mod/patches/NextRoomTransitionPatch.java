@@ -27,6 +27,6 @@ public class NextRoomTransitionPatch {
         CutsceneManager.reset();
 
         // Reset stats
-        ShopliftingManager.successRate = ShopliftingManager.BASE_SUCCESS_RATE;
+        ShopliftingManager.successRateMultiplier = 1;
     }
 }
