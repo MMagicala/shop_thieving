@@ -25,20 +25,32 @@ SOFTWARE.
 package shoplifting_mod;
 
 import basemod.*;
+import basemod.interfaces.EditStringsSubscriber;
 import basemod.interfaces.PostInitializeSubscriber;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.graphics.Color;
 import com.evacipated.cardcrawl.modthespire.lib.*;
+import com.google.gson.Gson;
+import com.megacrit.cardcrawl.helpers.CardHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
+import com.megacrit.cardcrawl.localization.PotionStrings;
+import shoplifting_mod.potions.ThievingPotion;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @SpireInitializer
-public class ShopliftingMod implements PostInitializeSubscriber {
+public class ShopliftingMod implements PostInitializeSubscriber, EditStringsSubscriber {
+    // Mod data
     private static SpireConfig config;
+    private static final String modID = "ShopliftingMod";
+
     // TODO: use game's random, not java's
     public static final Random random = new Random();
 
@@ -49,15 +61,22 @@ public class ShopliftingMod implements PostInitializeSubscriber {
     private static final float BUTTON_LABEL_X = 475.0f;
     private static final float BUTTON_LABEL_Y = 700.0f;
 
+    // Custom potion
+    public static final Color THIEVING_POTION_LIQUID = CardHelper.getColor(101, 37, 165); // Dark purple
+    public static final Color THIEVING_POTION_HYBRID = CardHelper.getColor(101, 37, 165); // Dark purple
+    public static final Color THIEVING_POTION_SPOTS = CardHelper.getColor(101, 37, 165); // Dark purple
+
     public ShopliftingMod() {
+/*
         System.out.println("Shoplifting Mod initialized");
+*/
     }
 
     public static void initialize() {
         BaseMod.subscribe(new ShopliftingMod());
     }
 
-    public static boolean isConfigKeyPressed(){
+    public static boolean isConfigKeyPressed() {
         return Gdx.input.isKeyPressed(config.getInt(HOTKEY_KEY));
     }
 
@@ -101,7 +120,47 @@ public class ShopliftingMod implements PostInitializeSubscriber {
         });
         settingsPanel.addUIElement(hotkeyButton);
 
+        // Add thieving potion
+        BaseMod.addPotion(ThievingPotion.class, THIEVING_POTION_LIQUID, THIEVING_POTION_HYBRID,
+                THIEVING_POTION_SPOTS, ThievingPotion.POTION_ID);
+
         // Load config
         BaseMod.registerModBadge(ImageMaster.loadImage("badge.jpg"), "Best Route Mod", "MMagicala", "Find the best route in the map!", settingsPanel);
     }
+
+    @Override
+    public void receiveEditStrings() {
+        // PotionStrings
+        BaseMod.loadCustomStringsFile(PotionStrings.class,
+                modID + "Resources/localization/eng/ShopliftingMod-Potion-Strings.json");
+    }
+
+    public static String makeID(String idText) {
+        return modID + ":" + idText;
+    }
+
+/*
+    // Don't edit this method
+    public static void setModID(String ID) {
+        Gson coolG = new Gson();
+        // String IDjson = Gdx.files.internal("IDCheckStringsDONT-EDIT-AT-ALL.json").readString(String.valueOf(StandardCharsets.UTF_8)); // i hate u Gdx.files
+        InputStream in = ShopliftingMod.class.getResourceAsStream("/IDCheckStringsDONT-EDIT-AT-ALL.json");
+        IDCheckDontTouchPls EXCEPTION_STRINGS = coolG.fromJson(new InputStreamReader(in, StandardCharsets.UTF_8), IDCheckDontTouchPls.class); // OR THIS, DON'T EDIT IT
+        if (ID.equals(EXCEPTION_STRINGS.DEFAULTID)) {
+            throw new RuntimeException(EXCEPTION_STRINGS.EXCEPTION);
+        } else if (ID.equals(EXCEPTION_STRINGS.DEVID)) {
+            modID = EXCEPTION_STRINGS.DEFAULTID;
+        } else {
+            modID = ID;
+        }
+        logger.info("Success! ShopliftingMod ID is " + modID);
+    }
+*/
+
+
+/*
+    public static String getModID() {
+        return modID;
+    }
+*/
 }
