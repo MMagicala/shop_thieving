@@ -11,9 +11,11 @@ import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
 import com.megacrit.cardcrawl.vfx.DarkSmokePuffEffect;
 import com.megacrit.cardcrawl.vfx.TextAboveCreatureEffect;
+import com.megacrit.cardcrawl.vfx.combat.SmokeBombEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import javassist.expr.ExprEditor;
+import javassist.expr.FieldAccess;
 import javassist.expr.MethodCall;
 import shoplifting_mod.handlers.ShopliftingHandler;
 
@@ -72,8 +74,7 @@ public class ItemStolenEffectsPatch {
         /**
          * Only play purchase item method's original code if we aren't stealing it
          *
-         * @param fileName   Identifies the type of item
-         * @param methodName
+         * @param fileName Identifies the type of item
          * @return
          */
         private static String getExpr(String fileName, String methodName) {
@@ -86,13 +87,10 @@ public class ItemStolenEffectsPatch {
                 // Play gold jingle and smoke sound
                 sb.append(CardCrawlGame.class.getName());
                 sb.append(".sound.play(\"GOLD_JINGLE\");");
-                // Play smoke vfx at the saved x and y
-                addPlayEffectExpr(sb, DarkSmokePuffEffect.class);
                 // Play "Stolen card" text effect
                 addPlayEffectExpr(sb, TextAboveCreatureEffect.class);
-                // Reset item successfully stolen flag
-                sb.append(ShopliftingHandler.class.getName());
-                sb.append(".isItemSuccessfullyStolen = " + false + ";");
+                // Play smoke vfx
+                addPlayEffectExpr(sb, SmokeBombEffect.class);
             } else if (methodName.equals("addShopPurchaseData")) {
                 // Save x and y for smoke fx later
                 sb.append("}else{");
@@ -132,7 +130,6 @@ public class ItemStolenEffectsPatch {
         /**
          * Generates code expression to save the coordinates of an item
          *
-         * @param sb
          * @param propertyPrefix identifies the item's property name
          * @param isUppercase    determines case for x and y in property name. If false, lowercase
          */
@@ -172,6 +169,34 @@ public class ItemStolenEffectsPatch {
         public static void Insert(StorePotion __instance) {
             ShopliftingHandler.prevItemX = __instance.potion.posX;
             ShopliftingHandler.prevItemY = __instance.potion.posY;
+        }
+    }
+
+    @SpirePatch(
+            clz = SmokeBombEffect.class,
+            method = "update"
+    )
+    public static class SmokeBombEffectRenderPatch {
+        public static ExprEditor Instrument() {
+            return new ExprEditor() {
+                @Override
+                public void edit(MethodCall m) throws CannotCompileException {
+                    if (m.getMethodName().equals("add")) {
+                        m.replace("if(" + ShopliftingHandler.class.getName() + ".isItemSuccessfullyStolen){" +
+                                "$_ = " + AbstractDungeon.class.getName() + ".topLevelEffectsQueue.add($$);" +
+                                "}else{" +
+                                "$_ = $proceed($$);" +
+                                "}");
+                    }
+                }
+            };
+        }
+
+        @SpirePostfixPatch
+        public static void Postfix() {
+            if (ShopliftingHandler.isItemSuccessfullyStolen) {
+                ShopliftingHandler.isItemSuccessfullyStolen = false;
+            }
         }
     }
 }
