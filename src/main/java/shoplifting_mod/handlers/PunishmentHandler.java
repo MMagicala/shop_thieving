@@ -18,6 +18,8 @@ import com.megacrit.cardcrawl.shop.Merchant;
 import com.megacrit.cardcrawl.vfx.GainPennyEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
+import javassist.expr.ExprEditor;
+import javassist.expr.MethodCall;
 import shoplifting_mod.Punishment;
 import shoplifting_mod.ShopliftingMod;
 import shoplifting_mod.events.GremlinFight;
@@ -29,7 +31,7 @@ public class PunishmentHandler {
     public static Punishment decidedPunishment;
     public static boolean isPunishmentIssued = false;
 
-    public static void selectRandomPunishment(){
+    public static void selectRandomPunishment() {
         // Randomly pick punishment in advance
         ArrayList<Punishment> punishmentPool = new ArrayList<>(Arrays.asList(Punishment.values()));
         // Don't include lose all gold punishment if player has <100 gold
@@ -42,7 +44,7 @@ public class PunishmentHandler {
         decidedPunishment = punishmentPool.get(1);
     }
 
-    public static void issuePunishment(){
+    public static void issuePunishment() {
         switch (decidedPunishment) {
             case LOSE_ALL_GOLD:
                 Merchant merchant = ((ShopRoom) AbstractDungeon.getCurrRoom()).merchant;
@@ -81,6 +83,7 @@ public class PunishmentHandler {
                 break;
             case GREMLIN_FIGHT:
                 // Spawn gremlin nob
+                // TODO: CLEAN UP
                 AbstractDungeon.getCurrRoom().phase = AbstractRoom.RoomPhase.COMBAT;
                 AbstractDungeon.lastCombatMetricKey = GremlinNob.ID;
 
@@ -101,23 +104,41 @@ public class PunishmentHandler {
         }
     }
 
-    // Set punishment issued flag to true once curses are received
     @SpirePatch(
-            clz = GridCardSelectScreen.class,
-            method="update"
+            clz = AbstractRoom.class,
+            method = "update"
     )
-    public static class GridScreenConfirmPatch{
-        @SpireInsertPatch(
-                locator = CloseCurrentScreenLocator.class
-        )
-        public static void Insert(GridCardSelectScreen __instance){
-            isPunishmentIssued = true;
+    public static class PreventPotionRewardsPatch {
+        public static ExprEditor Instrument() {
+            return new ExprEditor() {
+                @Override
+                public void edit(MethodCall m) throws CannotCompileException {
+                    if (m.getMethodName().equals("addPotionToRewards")) {
+                        m.replace("if(" + AbstractDungeon.class.getName() + ".getCurrRoom().getClass() == " +
+                                ShopRoom.class.getName() + ".class){$_ = $proceed($$);}");
+                    }
+                }
+            };
         }
 
-        private static class CloseCurrentScreenLocator extends SpireInsertLocator {
-            public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
-                Matcher matcher = new Matcher.MethodCallMatcher(AbstractDungeon.class, "closeCurrentScreen");
-                return LineFinder.findInOrder(ctMethodToPatch, matcher);
+        // Set punishment issued flag to true once curses are received
+        @SpirePatch(
+                clz = GridCardSelectScreen.class,
+                method = "update"
+        )
+        public static class GridScreenConfirmPatch {
+            @SpireInsertPatch(
+                    locator = CloseCurrentScreenLocator.class
+            )
+            public static void Insert(GridCardSelectScreen __instance) {
+                isPunishmentIssued = true;
+            }
+
+            private static class CloseCurrentScreenLocator extends SpireInsertLocator {
+                public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
+                    Matcher matcher = new Matcher.MethodCallMatcher(AbstractDungeon.class, "closeCurrentScreen");
+                    return LineFinder.findInOrder(ctMethodToPatch, matcher);
+                }
             }
         }
     }
