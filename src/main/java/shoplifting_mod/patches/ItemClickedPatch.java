@@ -13,6 +13,9 @@ import com.megacrit.cardcrawl.shop.StoreRelic;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import shoplifting_mod.*;
+import shoplifting_mod.handlers.CutsceneHandler;
+import shoplifting_mod.handlers.PunishmentHandler;
+import shoplifting_mod.handlers.ShopliftingHandler;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -69,51 +72,11 @@ public class ItemClickedPatch {
      */
     private static SpireReturn<Void> CommonInsert(Object item) {
         if (ShopliftingMod.isConfigKeyPressed()) {
-            // Attempt to steal the item
-            float rollResult = ShopliftingMod.random.nextFloat();
-            if (rollResult < ShopliftingManager.getItemSuccessRate(item)) {
-                // Success! Give the player enough money and purchase the item
-                AbstractDungeon.player.gold += ShopliftingManager.getItemPrice(item);
-                ShopliftingManager.isItemSuccessfullyStolen = true;
-                if (item instanceof StoreRelic) {
-                    ((StoreRelic) item).purchaseRelic();
-                } else if (item instanceof StorePotion) {
-                    ((StorePotion) item).purchasePotion();
-                } else if (item instanceof AbstractCard) {
-                    try {
-                        Method purchaseCardMethod = ShopScreen.class.getDeclaredMethod("purchaseCard", AbstractCard.class);
-                        if (!purchaseCardMethod.isAccessible()) {
-                            purchaseCardMethod.setAccessible(true);
-                        }
-                        // Run the patched version of the purchase method
-                        purchaseCardMethod.invoke(AbstractDungeon.shopScreen, item);
-                    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                        e.printStackTrace();
-                    }
-                }
-            } else {
-                // Take damage if caught and play sound/vfx
-                AbstractDungeon.player.damage(new DamageInfo(null, ShopliftingManager.damageAmount, DamageInfo.DamageType.NORMAL));
-                int coin = ShopliftingMod.random.nextInt(2);
-                String soundKey = coin == 1 ? "BLUNT_FAST" : "BLUNT_HEAVY";
-                CardCrawlGame.sound.play(soundKey);
-
-                // Kick player out of shop if they are alive
-                if (!AbstractDungeon.player.isDead) {
-                    AbstractDungeon.closeCurrentScreen();
-                    ShopliftingManager.isKickedOut = true;
-                }
-                PunishmentManager.chooseRandomPunishment();
-
-                // Load shopkeeper dialogue
-                CutsceneManager.enqueueMerchantDialogue(DialoguePool.CAUGHT.values, 2.5f);
-                CutsceneManager.enqueueMerchantDialogue(PunishmentManager.decidedPunishment.dialoguePool, 3f);
-            }
-
+            ShopliftingHandler.attemptToSteal(item);
             // Return early
             return SpireReturn.Return(null);
         }
-        // Hotkey not pressed, return to normal
+        // Hotkey not pressed
         return SpireReturn.Continue();
     }
 }

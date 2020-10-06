@@ -7,7 +7,7 @@ import com.megacrit.cardcrawl.shop.Merchant;
 import javassist.CannotCompileException;
 import javassist.expr.ExprEditor;
 import javassist.expr.FieldAccess;
-import shoplifting_mod.CutsceneManager;
+import shoplifting_mod.handlers.CutsceneHandler;
 
 @SpirePatch(
         clz = Merchant.class,
@@ -29,6 +29,6 @@ public class NoMerchantHoverEffectPatch {
     }
 
     public static boolean instrumentCondition(){
-        return ((ShopRoom)AbstractDungeon.getCurrRoom()).merchant.hb.hovered && CutsceneManager.isDialogueFinished();
+        return ((ShopRoom)AbstractDungeon.getCurrRoom()).merchant.hb.hovered && CutsceneHandler.isDialogueFinished();
     }
 }

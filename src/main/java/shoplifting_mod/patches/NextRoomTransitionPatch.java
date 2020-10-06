@@ -4,9 +4,9 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.saveAndContinue.SaveFile;
-import shoplifting_mod.CutsceneManager;
-import shoplifting_mod.PunishmentManager;
-import shoplifting_mod.ShopliftingManager;
+import shoplifting_mod.handlers.CutsceneHandler;
+import shoplifting_mod.handlers.PunishmentHandler;
+import shoplifting_mod.handlers.ShopliftingHandler;
 
 // Reset everything once we enter a new room
 @SpirePatch(
@@ -18,15 +18,15 @@ public class NextRoomTransitionPatch {
     @SpirePostfixPatch
     public static void Postfix(AbstractDungeon __instance, SaveFile saveFile) {
         // Reset flags
-        if (ShopliftingManager.isKickedOut) {
-            ShopliftingManager.isKickedOut = false;
+        if (ShopliftingHandler.isKickedOut) {
+            ShopliftingHandler.isKickedOut = false;
         }
-        if (PunishmentManager.isPunishmentIssued) {
-            PunishmentManager.isPunishmentIssued = false;
+        if (PunishmentHandler.isPunishmentIssued) {
+            PunishmentHandler.isPunishmentIssued = false;
         }
-        CutsceneManager.reset();
+        CutsceneHandler.reset();
 
         // Reset stats
-        ShopliftingManager.successRateMultiplier = 1;
+        ShopliftingHandler.successRateMultiplier = 1;
     }
 }

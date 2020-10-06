@@ -7,6 +7,9 @@ import com.megacrit.cardcrawl.shop.Merchant;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import shoplifting_mod.*;
+import shoplifting_mod.handlers.CutsceneHandler;
+import shoplifting_mod.handlers.PunishmentHandler;
+import shoplifting_mod.handlers.ShopliftingHandler;
 
 // Merchant dialogue on click
 @SpirePatch(
@@ -18,12 +21,12 @@ public class MerchantClickedPatch {
             locator = MerchantClickedLocator.class
     )
     public static SpireReturn<Void> Insert(Merchant __instance) {
-        if (ShopliftingManager.isKickedOut && PunishmentManager.isPunishmentIssued && CutsceneManager.isDialogueFinished()) {
+        if (ShopliftingHandler.isKickedOut && PunishmentHandler.isPunishmentIssued && CutsceneHandler.isDialogueFinished()) {
             // Play custom merchant dialogue once clicked
-            CutsceneManager.enqueueMerchantDialogue(DialoguePool.FORBID.values, 5f);
+            CutsceneHandler.enqueueMerchantDialogue(DialoguePool.FORBID.values, 5f);
         }
         // Don't let player enter shop if they were kicked out
-        return ShopliftingManager.isKickedOut ? SpireReturn.Return(null) : SpireReturn.Continue();
+        return ShopliftingHandler.isKickedOut ? SpireReturn.Return(null) : SpireReturn.Continue();
     }
 
     private static class MerchantClickedLocator extends SpireInsertLocator {

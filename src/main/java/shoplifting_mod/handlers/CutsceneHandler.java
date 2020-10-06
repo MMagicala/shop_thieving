@@ -1,12 +1,10 @@
-package shoplifting_mod;
+package shoplifting_mod.handlers;
 
 import basemod.ReflectionHacks;
 import com.badlogic.gdx.Gdx;
 import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
-import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
-import com.megacrit.cardcrawl.cutscenes.Cutscene;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.shop.Merchant;
@@ -17,10 +15,11 @@ import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
+import shoplifting_mod.ShopliftingMod;
 
 import java.util.LinkedList;
 
-public class CutsceneManager {
+public class CutsceneHandler {
     private static final LinkedList<Dialogue> dialogueQueue = new LinkedList<>();
     private static float currentDialogueTime;
 
@@ -48,8 +47,7 @@ public class CutsceneManager {
     public static class DisableProceedButtonPatch {
         @SpirePrefixPatch
         public static void Prefix(ProceedButton __instance) {
-            // TODO: improve logic
-            if (ShopliftingManager.isKickedOut && !PunishmentManager.isPunishmentIssued) {
+            if (ShopliftingHandler.isKickedOut && !PunishmentHandler.isPunishmentIssued) {
                 __instance.hide();
             }
         }
@@ -66,8 +64,8 @@ public class CutsceneManager {
                 @Override
                 public void edit(MethodCall m) throws CannotCompileException {
                     if (m.getMethodName().equals("updateMapButtonLogic")) {
-                        m.replace("if(!" + ShopliftingManager.class.getName() + ".isKickedOut || " +
-                                PunishmentManager.class.getName() + ".isPunishmentIssued){$_ = $proceed($$);}");
+                        m.replace("if(!" + ShopliftingHandler.class.getName() + ".isKickedOut || " +
+                                PunishmentHandler.class.getName() + ".isPunishmentIssued){$_ = $proceed($$);}");
                     }
                 }
             };
@@ -84,7 +82,7 @@ public class CutsceneManager {
                 locator = SpeechTimerUpdateLocator.class
         )
         public static void Insert(Merchant __instance) {
-            if (ShopliftingManager.isKickedOut) {
+            if (ShopliftingHandler.isKickedOut) {
                 // Freeze the merchant's speech timer when kicked out
                 float speechTimer = (float) ReflectionHacks.getPrivate(__instance, Merchant.class, "speechTimer");
                 speechTimer += Gdx.graphics.getDeltaTime();
@@ -102,9 +100,9 @@ public class CutsceneManager {
                                 dialogue.text, false));
                         // Reset timer
                         currentDialogueTime = dialogue.duration;
-                    } else if (!PunishmentManager.isPunishmentIssued) {
+                    } else if (!PunishmentHandler.isPunishmentIssued) {
                         // After dialogue is finally completed, apply the punishment
-                        PunishmentManager.issuePunishment();
+                        PunishmentHandler.issuePunishment();
                     }
                 }
             }

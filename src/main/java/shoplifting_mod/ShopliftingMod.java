@@ -33,16 +33,13 @@ import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
 import com.evacipated.cardcrawl.modthespire.lib.*;
-import com.google.gson.Gson;
+import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.CardHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.localization.PotionStrings;
 import shoplifting_mod.potions.ThievingPotion;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @SpireInitializer
@@ -50,12 +47,12 @@ public class ShopliftingMod implements PostInitializeSubscriber, EditStringsSubs
     // Mod data
     private static SpireConfig config;
     private static final String modID = "ShopliftingMod";
+    private static final String HOTKEY_KEY = "hotkey";
 
-    // TODO: use game's random, not java's
+    // TODO: add seed
     public static final Random random = new Random();
 
     // Mod UI
-    private static final String HOTKEY_KEY = "hotkey";
     private static final float BUTTON_X = 350.0f;
     private static final float BUTTON_Y = 650.0f;
     private static final float BUTTON_LABEL_X = 475.0f;
@@ -67,9 +64,7 @@ public class ShopliftingMod implements PostInitializeSubscriber, EditStringsSubs
     public static final Color THIEVING_POTION_SPOTS = CardHelper.getColor(101, 37, 165); // Dark purple
 
     public ShopliftingMod() {
-/*
         System.out.println("Shoplifting Mod initialized");
-*/
     }
 
     public static void initialize() {
@@ -138,29 +133,4 @@ public class ShopliftingMod implements PostInitializeSubscriber, EditStringsSubs
     public static String makeID(String idText) {
         return modID + ":" + idText;
     }
-
-/*
-    // Don't edit this method
-    public static void setModID(String ID) {
-        Gson coolG = new Gson();
-        // String IDjson = Gdx.files.internal("IDCheckStringsDONT-EDIT-AT-ALL.json").readString(String.valueOf(StandardCharsets.UTF_8)); // i hate u Gdx.files
-        InputStream in = ShopliftingMod.class.getResourceAsStream("/IDCheckStringsDONT-EDIT-AT-ALL.json");
-        IDCheckDontTouchPls EXCEPTION_STRINGS = coolG.fromJson(new InputStreamReader(in, StandardCharsets.UTF_8), IDCheckDontTouchPls.class); // OR THIS, DON'T EDIT IT
-        if (ID.equals(EXCEPTION_STRINGS.DEFAULTID)) {
-            throw new RuntimeException(EXCEPTION_STRINGS.EXCEPTION);
-        } else if (ID.equals(EXCEPTION_STRINGS.DEVID)) {
-            modID = EXCEPTION_STRINGS.DEFAULTID;
-        } else {
-            modID = ID;
-        }
-        logger.info("Success! ShopliftingMod ID is " + modID);
-    }
-*/
-
-
-/*
-    public static String getModID() {
-        return modID;
-    }
-*/
 }

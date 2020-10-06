@@ -15,12 +15,12 @@ import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
-import shoplifting_mod.ShopliftingManager;
+import shoplifting_mod.handlers.ShopliftingHandler;
 
 import java.util.ArrayList;
 
 // Patch purchase item methods
-public class ItemPurchasedPatch {
+public class ItemStolenEffectsPatch {
     @SpirePatch(
             clz = ShopScreen.class,
             method = "purchaseCard"
@@ -79,7 +79,7 @@ public class ItemPurchasedPatch {
         private static String getExpr(String fileName, String methodName) {
             StringBuilder sb = new StringBuilder();
             sb.append("if(!");
-            sb.append(ShopliftingManager.class.getName());
+            sb.append(ShopliftingHandler.class.getName());
             sb.append(".isItemSuccessfullyStolen){ $_ = $proceed($$);");
             if (methodName.equals("createSpeech")) {
                 sb.append("}else{");
@@ -91,7 +91,7 @@ public class ItemPurchasedPatch {
                 // Play "Stolen card" text effect
                 addPlayEffectExpr(sb, TextAboveCreatureEffect.class);
                 // Reset item successfully stolen flag
-                sb.append(ShopliftingManager.class.getName());
+                sb.append(ShopliftingHandler.class.getName());
                 sb.append(".isItemSuccessfullyStolen = " + false + ";");
             } else if (methodName.equals("addShopPurchaseData")) {
                 // Save x and y for smoke fx later
@@ -117,9 +117,9 @@ public class ItemPurchasedPatch {
             sb.append(".topLevelEffectsQueue.add(new ");
             sb.append(effectClass.getName());
             sb.append("(");
-            sb.append(ShopliftingManager.class.getName());
+            sb.append(ShopliftingHandler.class.getName());
             sb.append(".prevItemX, ");
-            sb.append(ShopliftingManager.class.getName());
+            sb.append(ShopliftingHandler.class.getName());
             sb.append(".prevItemY");
             if (effectClass == TextAboveCreatureEffect.class) {
                 sb.append(",\"Item stolen!\", ");
@@ -140,7 +140,7 @@ public class ItemPurchasedPatch {
             char uppercaseCoordinate = 'X';
             char coordinate = isUppercase ? 'X' : 'x';
             for (int i = 0; i < 2; i++) {
-                sb.append(ShopliftingManager.class.getName());
+                sb.append(ShopliftingHandler.class.getName());
                 sb.append(".prevItem");
                 sb.append(uppercaseCoordinate);
                 sb.append(" = ");
@@ -170,8 +170,8 @@ public class ItemPurchasedPatch {
                 locator = PotionBeforeMoveLocator.class
         )
         public static void Insert(StorePotion __instance) {
-            ShopliftingManager.prevItemX = __instance.potion.posX;
-            ShopliftingManager.prevItemY = __instance.potion.posY;
+            ShopliftingHandler.prevItemX = __instance.potion.posX;
+            ShopliftingHandler.prevItemY = __instance.potion.posY;
         }
     }
 }

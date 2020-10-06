@@ -1,4 +1,4 @@
-package shoplifting_mod;
+package shoplifting_mod.handlers;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.*;
@@ -14,21 +14,24 @@ import com.megacrit.cardcrawl.shop.Merchant;
 import com.megacrit.cardcrawl.vfx.GainPennyEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
+import shoplifting_mod.Punishment;
+import shoplifting_mod.ShopliftingMod;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class PunishmentManager {
+public class PunishmentHandler {
     public static Punishment decidedPunishment;
     public static boolean isPunishmentIssued = false;
 
-    public static void chooseRandomPunishment(){
+    public static void selectRandomPunishment(){
         // Randomly pick punishment in advance
         ArrayList<Punishment> punishmentPool = new ArrayList<>(Arrays.asList(Punishment.values()));
         // Don't include lose all gold punishment if player has <100 gold
         if (AbstractDungeon.player.gold < 99) {
             punishmentPool.remove(Punishment.LOSE_ALL_GOLD);
         }
+        // TODO: use streams?
         int bound = punishmentPool.size();
         int randomIndex = ShopliftingMod.random.nextInt(bound);
         decidedPunishment = punishmentPool.get(randomIndex);
@@ -37,16 +40,27 @@ public class PunishmentManager {
     public static void issuePunishment(){
         switch (decidedPunishment) {
             case LOSE_ALL_GOLD:
-                // Sfx and vfx
+                // Sfx
                 CardCrawlGame.sound.play("GOLD_JINGLE");
+                // Play steal gold effect
                 Merchant merchant = ((ShopRoom) AbstractDungeon.getCurrRoom()).merchant;
                 float playerX = AbstractDungeon.player.hb.cX;
                 float playerY = AbstractDungeon.player.hb.cY;
-                DummyEntity dummyEntity = new DummyEntity();
+                AbstractCreature dummyEntity = new AbstractCreature() {
+                    @Override
+                    public void damage(DamageInfo damageInfo) {
+
+                    }
+
+                    @Override
+                    public void render(SpriteBatch spriteBatch) {
+
+                    }
+                };
                 for (int j = 0; j < AbstractDungeon.player.gold; j++) {
                     AbstractDungeon.effectList.add(new GainPennyEffect(dummyEntity, playerX, playerY, merchant.hb.cX, merchant.hb.cY, false));
                 }
-                // Apply
+                // Steal gold
                 AbstractDungeon.player.loseGold(AbstractDungeon.player.gold);
                 isPunishmentIssued = true;
                 break;
@@ -60,19 +74,6 @@ public class PunishmentManager {
                 // Apply
                 AbstractDungeon.gridSelectScreen.openConfirmationGrid(cardGroup, "You shoplifted!");
                 break;
-        }
-    }
-
-    // This "entity" will receive the gold stolen from the player
-    private static class DummyEntity extends AbstractCreature {
-        @Override
-        public void damage(DamageInfo damageInfo) {
-
-        }
-
-        @Override
-        public void render(SpriteBatch spriteBatch) {
-
         }
     }
 

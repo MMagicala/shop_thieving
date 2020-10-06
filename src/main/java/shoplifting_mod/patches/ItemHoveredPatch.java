@@ -8,7 +8,6 @@ import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
-import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
@@ -18,7 +17,6 @@ import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
-import shoplifting_mod.ShopliftingManager;
 import shoplifting_mod.ShopliftingMod;
 
 public class ItemHoveredPatch {
@@ -87,11 +85,11 @@ public class ItemHoveredPatch {
     public static class StopItemRenderPatch{
         @SpirePrefixPatch
         public static SpireReturn<Void> Prefix(Object __instance){
-            // Don't render before the dark background if this is the highlighted item
+            // Don't render the highlighted item before the dark background
             if(__instance == highlightedItem && !renderHighlightedItem){
                 return SpireReturn.Return(null);
             }
-            // Otherwise render like normal
+            // Otherwise render like the item like normal
             return SpireReturn.Continue();
         }
     }
@@ -105,11 +103,12 @@ public class ItemHoveredPatch {
         // How long it takes for dark background to fully show/hide
         private static final float FADE_DURATION = 0.5f;
 
-        // Show dark background by changing its opacity
+        // Make dark bg appear
         @SpireInsertPatch(
                 locator = PreRenderBlackScreenLocator.class
         )
         public static void ShowDarkBackgroundPatch(CardCrawlGame __instance) {
+            // Set bg opacity
             Color screenColor = (Color) ReflectionHacks.getPrivate(__instance, CardCrawlGame.class, "screenColor");
             if (highlightedItem != null) {
                 if (screenColor.a < 0.5f) {
@@ -126,14 +125,14 @@ public class ItemHoveredPatch {
             }
         }
 
+        // After dark bg has rendered
         @SpireInsertPatch(
                 locator = PostRenderBlackScreenLocator.class
         )
         public static void RenderTooltipAndItem(CardCrawlGame __instance) {
             if (highlightedItem != null) {
-                // Get sprite batch of CardCrawlGame
                 SpriteBatch sb = (SpriteBatch)ReflectionHacks.getPrivate(__instance, CardCrawlGame.class, "sb");
-                // Render the item after the dark background
+                // Call item render methods
                 renderHighlightedItem = true;
                 if (highlightedItem instanceof StoreRelic) {
                     ((StoreRelic) highlightedItem).relic.renderWithoutAmount(sb, new Color(0.0F, 0.0F, 0.0F, 0.25F));

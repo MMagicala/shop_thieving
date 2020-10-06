@@ -1,22 +1,13 @@
 package shoplifting_mod.potions;
 
-import basemod.BaseMod;
-import basemod.abstracts.CustomBottleRelic;
 import basemod.abstracts.CustomPotion;
-import basemod.abstracts.CustomSavable;
-import basemod.abstracts.CustomSavableRaw;
-import com.google.gson.JsonElement;
-import com.megacrit.cardcrawl.actions.common.ApplyPowerAction;
 import com.megacrit.cardcrawl.core.AbstractCreature;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.PowerTip;
 import com.megacrit.cardcrawl.localization.PotionStrings;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
-import com.megacrit.cardcrawl.powers.LoseStrengthPower;
-import com.megacrit.cardcrawl.powers.StrengthPower;
-import com.megacrit.cardcrawl.rooms.AbstractRoom;
-import shoplifting_mod.ShopliftingManager;
+import shoplifting_mod.handlers.ShopliftingHandler;
 import shoplifting_mod.ShopliftingMod;
 
 public class ThievingPotion extends CustomPotion {
@@ -55,7 +46,7 @@ public class ThievingPotion extends CustomPotion {
 
     @Override
     public void use(AbstractCreature target) {
-        ShopliftingManager.successRateMultiplier *= 2;
+        ShopliftingHandler.successRateMultiplier *= potency;
     }
 
     @Override
@@ -68,12 +59,10 @@ public class ThievingPotion extends CustomPotion {
         return 2;
     }
 
-/*
-    public void upgradePotion()
+    /*public void upgradePotion()
     {
         potency += 1;
         tips.clear();
         tips.add(new PowerTip(name, description));
-    }
-*/
+    }*/
 }
