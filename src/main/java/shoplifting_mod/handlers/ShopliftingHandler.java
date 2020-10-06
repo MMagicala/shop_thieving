@@ -11,6 +11,7 @@ import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
 import shoplifting_mod.DialoguePool;
+import shoplifting_mod.ItemStats;
 import shoplifting_mod.ShopliftingMod;
 
 import java.lang.reflect.InvocationTargetException;
@@ -56,18 +57,6 @@ public class ShopliftingHandler {
         }
     };
 
-    public static int getPrice(Object item){
-        int itemPrice = -1;
-        if (item instanceof StoreRelic) {
-            itemPrice = ((StoreRelic) item).price;
-        } else if (item instanceof StorePotion) {
-            itemPrice = ((StorePotion) item).price;
-        } else if (item instanceof AbstractCard) {
-            itemPrice = ((AbstractCard)item).price;
-        }
-        return itemPrice;
-    }
-
     public static float getSuccessRate(Object item){
         float successRate = successRateMultiplier;
         if (item instanceof StoreRelic) {
@@ -94,7 +83,7 @@ public class ShopliftingHandler {
             isItemSuccessfullyStolen = true;
 
             // Give player money to "purchase" item
-            AbstractDungeon.player.gold += ShopliftingHandler.getPrice(item);
+            AbstractDungeon.player.gold += ItemStats.getPrice(item);
 
             // Call purchase method
             if (item instanceof StoreRelic) {

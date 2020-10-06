@@ -21,7 +21,7 @@ import shoplifting_mod.ShopliftingMod;
 
 public class ItemHoveredPatch {
     private static Object highlightedItem;
-    private static boolean renderHighlightedItem = false;
+    private static boolean isDarkBgRendered = false;
     // Hover over item listeners
 
     @SpirePatch(
@@ -86,7 +86,7 @@ public class ItemHoveredPatch {
         @SpirePrefixPatch
         public static SpireReturn<Void> Prefix(Object __instance){
             // Don't render the highlighted item before the dark background
-            if(__instance == highlightedItem && !renderHighlightedItem){
+            if(__instance == highlightedItem && !isDarkBgRendered){
                 return SpireReturn.Return(null);
             }
             // Otherwise render like the item like normal
@@ -133,7 +133,7 @@ public class ItemHoveredPatch {
             if (highlightedItem != null) {
                 SpriteBatch sb = (SpriteBatch)ReflectionHacks.getPrivate(__instance, CardCrawlGame.class, "sb");
                 // Call item render methods
-                renderHighlightedItem = true;
+                isDarkBgRendered = true;
                 if (highlightedItem instanceof StoreRelic) {
                     ((StoreRelic) highlightedItem).relic.renderWithoutAmount(sb, new Color(0.0F, 0.0F, 0.0F, 0.25F));
                 } else if (highlightedItem instanceof StorePotion) {
@@ -147,7 +147,7 @@ public class ItemHoveredPatch {
                 FontHelper.renderFontLeft(sb, FontHelper.bannerFont, "Steal item?", x, y, Color.WHITE);
             }
             // Reset flags for next render cycle
-            renderHighlightedItem = false;
+            isDarkBgRendered = false;
             highlightedItem = null;
         }
 
