@@ -9,6 +9,7 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
+import com.megacrit.cardcrawl.vfx.AbstractGameEffect;
 import com.megacrit.cardcrawl.vfx.DarkSmokePuffEffect;
 import com.megacrit.cardcrawl.vfx.TextAboveCreatureEffect;
 import com.megacrit.cardcrawl.vfx.combat.SmokeBombEffect;
@@ -84,13 +85,21 @@ public class ItemStolenEffectsPatch {
             sb.append(".isItemSuccessfullyStolen){ $_ = $proceed($$);");
             if (methodName.equals("createSpeech")) {
                 sb.append("}else{");
+
                 // Play gold jingle and smoke sound
                 sb.append(CardCrawlGame.class.getName());
                 sb.append(".sound.play(\"GOLD_JINGLE\");");
-                // Play "Stolen card" text effect
-                addPlayEffectExpr(sb, TextAboveCreatureEffect.class);
+
                 // Play smoke vfx
-                addPlayEffectExpr(sb, SmokeBombEffect.class);
+                sb.append(AbstractDungeon.class.getName());
+                sb.append(".topLevelEffectsQueue.add(new ");
+                sb.append(SmokeBombEffect.class.getName());
+                sb.append("(");
+                sb.append(ShopliftingHandler.class.getName());
+                sb.append(".prevItemX, ");
+                sb.append(ShopliftingHandler.class.getName());
+                sb.append(".prevItemY");
+                sb.append("));");
             } else if (methodName.equals("addShopPurchaseData")) {
                 // Save x and y for smoke fx later
                 sb.append("}else{");
@@ -103,28 +112,6 @@ public class ItemStolenEffectsPatch {
             }
             sb.append("}");
             return sb.toString();
-        }
-
-        /**
-         * Plays an effect at the coordinates where item was stolen
-         *
-         * @param effectClass the type of effect being played
-         */
-        private static void addPlayEffectExpr(StringBuilder sb, Class<?> effectClass) {
-            sb.append(AbstractDungeon.class.getName());
-            sb.append(".topLevelEffectsQueue.add(new ");
-            sb.append(effectClass.getName());
-            sb.append("(");
-            sb.append(ShopliftingHandler.class.getName());
-            sb.append(".prevItemX, ");
-            sb.append(ShopliftingHandler.class.getName());
-            sb.append(".prevItemY");
-            if (effectClass == TextAboveCreatureEffect.class) {
-                sb.append(",\"Item stolen!\", ");
-                sb.append(Color.class.getName());
-                sb.append(".WHITE");
-            }
-            sb.append("));");
         }
 
         /**
@@ -196,6 +183,7 @@ public class ItemStolenEffectsPatch {
         public static void Postfix() {
             if (ShopliftingHandler.isItemSuccessfullyStolen) {
                 ShopliftingHandler.isItemSuccessfullyStolen = false;
+                AbstractDungeon.topLevelEffectsQueue.add(new TextAboveCreatureEffect(ShopliftingHandler.prevItemX, ShopliftingHandler.prevItemY, "Item stolen!", Color.WHITE));
             }
         }
     }
