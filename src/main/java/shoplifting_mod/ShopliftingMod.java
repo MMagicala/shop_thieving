@@ -46,7 +46,7 @@ import java.io.IOException;
 import java.util.*;
 
 @SpireInitializer
-public class ShopliftingMod implements PostInitializeSubscriber, EditStringsSubscriber, PostBattleSubscriber {
+public class ShopliftingMod implements PostInitializeSubscriber, EditStringsSubscriber {
     // Mod data
     private static SpireConfig config;
     private static final String modID = "ShopliftingMod";
@@ -137,11 +137,13 @@ public class ShopliftingMod implements PostInitializeSubscriber, EditStringsSubs
         return modID + ":" + idText;
     }
 
+/*
     // Don't show any rewards after a gremlin fight
     @Override
     public void receivePostBattle(AbstractRoom abstractRoom) {
         if(ShopliftingHandler.isKickedOut){
-            abstractRoom.rewards.clear();
+            AbstractDungeon.getCurrRoom().rewards.clear();
         }
     }
+*/
 }
