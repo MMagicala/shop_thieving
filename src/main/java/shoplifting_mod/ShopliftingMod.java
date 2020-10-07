@@ -26,6 +26,7 @@ package shoplifting_mod;
 
 import basemod.*;
 import basemod.interfaces.EditStringsSubscriber;
+import basemod.interfaces.PostBattleSubscriber;
 import basemod.interfaces.PostInitializeSubscriber;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -37,13 +38,15 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.CardHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.localization.PotionStrings;
+import com.megacrit.cardcrawl.rooms.AbstractRoom;
+import shoplifting_mod.handlers.ShopliftingHandler;
 import shoplifting_mod.potions.ThievingPotion;
 
 import java.io.IOException;
 import java.util.*;
 
 @SpireInitializer
-public class ShopliftingMod implements PostInitializeSubscriber, EditStringsSubscriber {
+public class ShopliftingMod implements PostInitializeSubscriber, EditStringsSubscriber, PostBattleSubscriber {
     // Mod data
     private static SpireConfig config;
     private static final String modID = "ShopliftingMod";
@@ -132,5 +135,13 @@ public class ShopliftingMod implements PostInitializeSubscriber, EditStringsSubs
 
     public static String makeID(String idText) {
         return modID + ":" + idText;
+    }
+
+    // Don't show any rewards after a gremlin fight
+    @Override
+    public void receivePostBattle(AbstractRoom abstractRoom) {
+        if(ShopliftingHandler.isKickedOut){
+            abstractRoom.rewards.clear();
+        }
     }
 }
