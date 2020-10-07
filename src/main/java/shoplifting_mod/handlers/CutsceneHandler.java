@@ -15,6 +15,8 @@ import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
+import shoplifting_mod.DialoguePool;
+import shoplifting_mod.Punishment;
 import shoplifting_mod.ShopliftingMod;
 
 import java.util.LinkedList;
@@ -116,10 +118,17 @@ public class CutsceneHandler {
         }
     }
 
-    public static void enqueueMerchantDialogue(String[] dialoguePool, float duration) {
+    public static void enqueueMerchantDialogue(DialoguePool dialoguePool, float duration) {
         Merchant merchant = ((ShopRoom) (AbstractDungeon.getCurrRoom())).merchant;
-        int index = ShopliftingMod.random.nextInt(dialoguePool.length);
-        dialogueQueue.add(new Dialogue(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, dialoguePool[index], duration));
+        int index = ShopliftingMod.random.nextInt(dialoguePool.values.length);
+        dialogueQueue.add(new Dialogue(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, dialoguePool.values[index], duration));
+    }
+
+    public static void enqueueMerchantDialogue(Punishment punishment, float duration) {
+        Merchant merchant = ((ShopRoom) (AbstractDungeon.getCurrRoom())).merchant;
+        for(String dialogue: punishment.dialogue){
+            dialogueQueue.add(new Dialogue(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, dialogue, duration));
+        }
     }
 
     /**

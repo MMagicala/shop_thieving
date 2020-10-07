@@ -119,8 +119,8 @@ public class ShopliftingHandler {
             PunishmentHandler.selectRandomPunishment();
 
             // Load shopkeeper dialogue
-            CutsceneHandler.enqueueMerchantDialogue(DialoguePool.CAUGHT.values, 2.5f);
-            CutsceneHandler.enqueueMerchantDialogue(PunishmentHandler.decidedPunishment.dialoguePool, 3f);
+            CutsceneHandler.enqueueMerchantDialogue(DialoguePool.CAUGHT, 2.5f);
+            CutsceneHandler.enqueueMerchantDialogue(PunishmentHandler.decidedPunishment, 3f);
         }
     }
 }
