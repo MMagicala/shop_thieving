@@ -14,22 +14,22 @@ import com.megacrit.cardcrawl.shop.Merchant;
 import com.megacrit.cardcrawl.vfx.GainPennyEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
-import shoplifting_mod.Punishment;
+import shoplifting_mod.Cutscene;
 import shoplifting_mod.ShopliftingMod;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class PunishmentHandler {
-    public static Punishment decidedPunishment;
+    public static Cutscene decidedPunishment;
     public static boolean isPunishmentIssued = false;
 
     public static void selectRandomPunishment(){
         // Randomly pick punishment in advance
-        ArrayList<Punishment> punishmentPool = new ArrayList<>(Arrays.asList(Punishment.values()));
+        ArrayList<Cutscene> punishmentPool = new ArrayList<>(Arrays.asList(Cutscene.values()));
         // Don't include lose all gold punishment if player has <100 gold
         if (AbstractDungeon.player.gold < 99) {
-            punishmentPool.remove(Punishment.LOSE_ALL_GOLD);
+            punishmentPool.remove(Cutscene.LOSE_ALL_GOLD);
         }
         // TODO: use streams?
         int bound = punishmentPool.size();

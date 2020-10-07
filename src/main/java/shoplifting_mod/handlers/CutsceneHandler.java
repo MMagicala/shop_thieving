@@ -16,7 +16,7 @@ import javassist.CtBehavior;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
 import shoplifting_mod.DialoguePool;
-import shoplifting_mod.Punishment;
+import shoplifting_mod.Cutscene;
 import shoplifting_mod.ShopliftingMod;
 
 import java.util.LinkedList;
@@ -27,19 +27,6 @@ public class CutsceneHandler {
 
     // Merchant dialogue
 
-    private static class Dialogue {
-        private final float x;
-        private final float y;
-        private final String text;
-        private final float duration;
-
-        public Dialogue(float x, float y, String text, float duration) {
-            this.x = x;
-            this.y = y;
-            this.text = text;
-            this.duration = duration;
-        }
-    }
 
     // Hide proceed button while dialogue in progress
     @SpirePatch(
@@ -124,7 +111,7 @@ public class CutsceneHandler {
         dialogueQueue.add(new Dialogue(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, dialoguePool.values[index], duration));
     }
 
-    public static void enqueueMerchantDialogue(Punishment punishment, float duration) {
+    public static void enqueueMerchantDialogue(Cutscene punishment, float duration) {
         Merchant merchant = ((ShopRoom) (AbstractDungeon.getCurrRoom())).merchant;
         for(String dialogue: punishment.dialogue){
             dialogueQueue.add(new Dialogue(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, dialogue, duration));
