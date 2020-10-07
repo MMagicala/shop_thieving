@@ -72,7 +72,7 @@ public class ShopliftingHandler {
             successRate = 1;
         }
 
-        return 1; // successRate;
+        return 0; // successRate;
     }
 
     public static void attemptToSteal(Object item){

@@ -8,6 +8,10 @@ import com.megacrit.cardcrawl.cards.DamageInfo;
 import com.megacrit.cardcrawl.core.AbstractCreature;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
+import com.megacrit.cardcrawl.monsters.AbstractMonster;
+import com.megacrit.cardcrawl.monsters.MonsterGroup;
+import com.megacrit.cardcrawl.monsters.exordium.GremlinNob;
+import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.screens.select.GridCardSelectScreen;
 import com.megacrit.cardcrawl.shop.Merchant;
@@ -16,6 +20,7 @@ import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import shoplifting_mod.Punishment;
 import shoplifting_mod.ShopliftingMod;
+import shoplifting_mod.events.GremlinFight;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,16 +39,16 @@ public class PunishmentHandler {
         // TODO: use streams?
         int bound = punishmentPool.size();
         int randomIndex = ShopliftingMod.random.nextInt(bound);
-        decidedPunishment = punishmentPool.get(randomIndex);
+        decidedPunishment = punishmentPool.get(1);
     }
 
     public static void issuePunishment(){
         switch (decidedPunishment) {
             case LOSE_ALL_GOLD:
+                Merchant merchant = ((ShopRoom) AbstractDungeon.getCurrRoom()).merchant;
                 // Sfx
                 CardCrawlGame.sound.play("GOLD_JINGLE");
                 // Play steal gold effect
-                Merchant merchant = ((ShopRoom) AbstractDungeon.getCurrRoom()).merchant;
                 float playerX = AbstractDungeon.player.hb.cX;
                 float playerY = AbstractDungeon.player.hb.cY;
                 AbstractCreature dummyEntity = new AbstractCreature() {
@@ -73,6 +78,25 @@ public class PunishmentHandler {
                 }
                 // Apply
                 AbstractDungeon.gridSelectScreen.openConfirmationGrid(cardGroup, "You shoplifted!");
+                break;
+            case GREMLIN_FIGHT:
+                // Spawn gremlin nob
+                AbstractDungeon.getCurrRoom().phase = AbstractRoom.RoomPhase.COMBAT;
+                AbstractDungeon.lastCombatMetricKey = GremlinNob.ID;
+
+                GremlinNob gremlinNob = new GremlinNob(250f, 0f);
+                AbstractDungeon.getCurrRoom().monsters = new MonsterGroup(gremlinNob);
+                AbstractDungeon.getCurrRoom().event = new GremlinFight();
+                AbstractDungeon.getCurrRoom().rewards.clear();
+                AbstractDungeon.getCurrRoom().monsters.init();
+                for (AbstractMonster m : AbstractDungeon.getCurrRoom().monsters.monsters) {
+                    m.usePreBattleAction();
+                    m.useUniversalPreBattleAction();
+                }
+
+                AbstractRoom.waitTimer = 0.1f;
+                AbstractDungeon.player.preBattlePrep();
+                isPunishmentIssued = true;
                 break;
         }
     }
