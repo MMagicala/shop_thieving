@@ -3,11 +3,14 @@ package shoplifting_mod.handlers;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
+import com.megacrit.cardcrawl.blights.AbstractBlight;
 import com.megacrit.cardcrawl.cards.CardGroup;
 import com.megacrit.cardcrawl.cards.DamageInfo;
 import com.megacrit.cardcrawl.core.AbstractCreature;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
+import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
+import com.megacrit.cardcrawl.helpers.BlightHelper;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.screens.select.GridCardSelectScreen;
 import com.megacrit.cardcrawl.shop.Merchant;
@@ -34,7 +37,7 @@ public class PunishmentHandler {
         // TODO: use streams?
         int bound = punishmentPool.size();
         int randomIndex = ShopliftingMod.random.nextInt(bound);
-        decidedPunishment = punishmentPool.get(randomIndex);
+        decidedPunishment = Punishment.BLIGHT; // punishmentPool.get(randomIndex);
     }
 
     public static void issuePunishment(){
@@ -73,6 +76,14 @@ public class PunishmentHandler {
                 }
                 // Apply
                 AbstractDungeon.gridSelectScreen.openConfirmationGrid(cardGroup, "You shoplifted!");
+                break;
+            case BLIGHT:
+                for(int i = 0; i < 3; i++) {
+                    int index = ShopliftingMod.random.nextInt(BlightHelper.blights.size());
+                    AbstractBlight blight = BlightHelper.getBlight(BlightHelper.blights.get(index));
+                    AbstractDungeon.getCurrRoom().spawnBlightAndObtain(Settings.WIDTH / 2.0F, Settings.HEIGHT / 2.0F, blight);
+                }
+                isPunishmentIssued = true;
                 break;
         }
     }

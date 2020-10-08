@@ -46,6 +46,7 @@ public class ShopliftingHandler {
             put(AbstractRelic.RelicTier.SHOP, 0.5f);
             put(AbstractRelic.RelicTier.UNCOMMON, 0.4f);
             put(AbstractRelic.RelicTier.RARE, 0.3f);
+            put(AbstractRelic.RelicTier.SPECIAL, 0.2f);
         }
     };
 
@@ -54,6 +55,7 @@ public class ShopliftingHandler {
             put(AbstractCard.CardRarity.COMMON, 0.5f);
             put(AbstractCard.CardRarity.UNCOMMON, 0.4f);
             put(AbstractCard.CardRarity.RARE, 0.3f);
+            put(AbstractCard.CardRarity.SPECIAL, 0.2f);
         }
     };
 
@@ -72,7 +74,7 @@ public class ShopliftingHandler {
             successRate = 1;
         }
 
-        return 1; // successRate;
+        return successRate;
     }
 
     public static void attemptToSteal(Object item){
