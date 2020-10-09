@@ -37,7 +37,7 @@ public class PunishmentHandler {
         // TODO: use streams?
         int bound = punishmentPool.size();
         int randomIndex = ShopliftingMod.random.nextInt(bound);
-        decidedPunishment = Punishment.BLIGHT; // punishmentPool.get(randomIndex);
+        decidedPunishment = punishmentPool.get(randomIndex);
     }
 
     public static void issuePunishment(){

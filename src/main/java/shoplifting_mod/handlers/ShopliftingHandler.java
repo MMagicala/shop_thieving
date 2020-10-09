@@ -29,7 +29,7 @@ public class ShopliftingHandler {
 
     // Stats
     public static float successRateMultiplier = 1;
-    public static final int damageAmount = 0;
+    public static final int damageAmount = 20;
 
     // Probability tables
     private static final HashMap<AbstractPotion.PotionRarity, Float> potionProbabilities = new HashMap<AbstractPotion.PotionRarity, Float>(){
@@ -113,11 +113,14 @@ public class ShopliftingHandler {
             String soundKey = coin == 1 ? "BLUNT_FAST" : "BLUNT_HEAVY";
             CardCrawlGame.sound.play(soundKey);
 
-            // Kick player out of shop if they are alive
-            if (!AbstractDungeon.player.isDead) {
-                AbstractDungeon.closeCurrentScreen();
-                ShopliftingHandler.isKickedOut = true;
+            if(AbstractDungeon.player.isDead){
+                return;
             }
+
+            // Kick player out of shop
+            AbstractDungeon.closeCurrentScreen();
+            ShopliftingHandler.isKickedOut = true;
+
             PunishmentHandler.selectRandomPunishment();
 
             // Load shopkeeper dialogue
