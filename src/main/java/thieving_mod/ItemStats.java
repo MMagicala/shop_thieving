@@ -1,4 +1,4 @@
-package shoplifting_mod;
+package thieving_mod;
 
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.shop.StorePotion;

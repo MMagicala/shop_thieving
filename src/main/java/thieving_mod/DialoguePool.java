@@ -1,4 +1,4 @@
-package shoplifting_mod;
+package thieving_mod;
 
 public enum DialoguePool {
     CAUGHT("Thief!", "Hey! No stealing!", "I caught you!"),

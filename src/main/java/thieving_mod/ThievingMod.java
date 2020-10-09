@@ -22,7 +22,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-package shoplifting_mod;
+package thieving_mod;
 
 import basemod.*;
 import basemod.interfaces.EditStringsSubscriber;
@@ -33,20 +33,19 @@ import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
 import com.evacipated.cardcrawl.modthespire.lib.*;
-import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.CardHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.localization.PotionStrings;
-import shoplifting_mod.potions.ThievingPotion;
+import thieving_mod.potions.ThievingPotion;
 
 import java.io.IOException;
 import java.util.*;
 
 @SpireInitializer
-public class ShopliftingMod implements PostInitializeSubscriber, EditStringsSubscriber {
+public class ThievingMod implements PostInitializeSubscriber, EditStringsSubscriber {
     // Mod data
     private static SpireConfig config;
-    private static final String modID = "ShopliftingMod";
+    private static final String modID = "ThievingMod";
     private static final String HOTKEY_KEY = "hotkey";
 
     // TODO: add seed
@@ -63,12 +62,12 @@ public class ShopliftingMod implements PostInitializeSubscriber, EditStringsSubs
     public static final Color THIEVING_POTION_HYBRID = CardHelper.getColor(101, 37, 165); // Dark purple
     public static final Color THIEVING_POTION_SPOTS = CardHelper.getColor(101, 37, 165); // Dark purple
 
-    public ShopliftingMod() {
-        System.out.println("Shoplifting Mod initialized");
+    public ThievingMod() {
+        System.out.println("Thieving Mod initialized");
     }
 
     public static void initialize() {
-        BaseMod.subscribe(new ShopliftingMod());
+        BaseMod.subscribe(new ThievingMod());
     }
 
     public static boolean isConfigKeyPressed() {
@@ -83,7 +82,7 @@ public class ShopliftingMod implements PostInitializeSubscriber, EditStringsSubs
 
         // Try to load a config file. If not found, use the default properties
         try {
-            config = new SpireConfig("ShopliftingMod", "config", properties);
+            config = new SpireConfig("ThievingMod", "config", properties);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -120,14 +119,14 @@ public class ShopliftingMod implements PostInitializeSubscriber, EditStringsSubs
                 THIEVING_POTION_SPOTS, ThievingPotion.POTION_ID);
 
         // Load config
-        BaseMod.registerModBadge(ImageMaster.loadImage("badge.jpg"), "Best Route Mod", "MMagicala", "Find the best route in the map!", settingsPanel);
+        BaseMod.registerModBadge(ImageMaster.loadImage("ThievingModResources/badge.png"), "Thieving Mod", "MMagicala", "A mod that lets you steal items in the shop", settingsPanel);
     }
 
     @Override
     public void receiveEditStrings() {
         // PotionStrings
         BaseMod.loadCustomStringsFile(PotionStrings.class,
-                modID + "Resources/localization/eng/ShopliftingMod-Potion-Strings.json");
+                modID + "Resources/localization/eng/ThievingMod-Potion-Strings.json");
     }
 
     public static String makeID(String idText) {

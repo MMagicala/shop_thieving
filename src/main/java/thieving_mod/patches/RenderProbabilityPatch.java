@@ -1,4 +1,4 @@
-package shoplifting_mod.patches;
+package thieving_mod.patches;
 
 import basemod.ReflectionHacks;
 import com.badlogic.gdx.graphics.Color;
@@ -14,9 +14,8 @@ import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
-import shoplifting_mod.ItemStats;
-import shoplifting_mod.ShopliftingMod;
-import shoplifting_mod.handlers.ShopliftingHandler;
+import thieving_mod.ThievingMod;
+import thieving_mod.handlers.ShopliftingHandler;
 
 public class RenderProbabilityPatch {
     @SpirePatch(
@@ -51,7 +50,7 @@ public class RenderProbabilityPatch {
     }
 
     private static void renderItemProbability(Object item, SpriteBatch sb, AbstractCard card) {
-        if (ShopliftingMod.isConfigKeyPressed()) {
+        if (ThievingMod.isConfigKeyPressed()) {
             float itemProb = item instanceof ShopScreen ? ShopliftingHandler.getSuccessRate(card) : ShopliftingHandler.getSuccessRate(item);
             float itemX = -1, itemY = -1, dX = -1, dY = -1;
             if (item instanceof StoreRelic) {

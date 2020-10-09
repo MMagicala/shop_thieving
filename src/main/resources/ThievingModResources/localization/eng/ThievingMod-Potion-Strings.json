@@ -1,5 +1,5 @@
 {
-"ShopliftingMod:ThievingPotion": {
+"ThievingMod:ThievingPotion": {
         "NAME": "Thieving Potion",
         "DESCRIPTIONS": ["Double your chances to successfully steal items this turn."]
 }

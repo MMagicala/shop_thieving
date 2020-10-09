@@ -1,4 +1,4 @@
-package shoplifting_mod.patches;
+package thieving_mod.patches;
 
 import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
@@ -7,7 +7,7 @@ import com.megacrit.cardcrawl.shop.Merchant;
 import javassist.CannotCompileException;
 import javassist.expr.ExprEditor;
 import javassist.expr.FieldAccess;
-import shoplifting_mod.handlers.CutsceneHandler;
+import thieving_mod.handlers.CutsceneHandler;
 
 @SpirePatch(
         clz = Merchant.class,

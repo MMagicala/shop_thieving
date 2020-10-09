@@ -1,4 +1,4 @@
-package shoplifting_mod.handlers;
+package thieving_mod.handlers;
 
 import basemod.ReflectionHacks;
 import com.badlogic.gdx.Gdx;
@@ -15,9 +15,9 @@ import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
-import shoplifting_mod.DialoguePool;
-import shoplifting_mod.Punishment;
-import shoplifting_mod.ShopliftingMod;
+import thieving_mod.DialoguePool;
+import thieving_mod.Punishment;
+import thieving_mod.ThievingMod;
 
 import java.util.LinkedList;
 
@@ -120,7 +120,7 @@ public class CutsceneHandler {
 
     public static void enqueueMerchantDialogue(DialoguePool dialoguePool, float duration) {
         Merchant merchant = ((ShopRoom) (AbstractDungeon.getCurrRoom())).merchant;
-        int index = ShopliftingMod.random.nextInt(dialoguePool.values.length);
+        int index = ThievingMod.random.nextInt(dialoguePool.values.length);
         dialogueQueue.add(new Dialogue(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, dialoguePool.values[index], duration));
     }
 

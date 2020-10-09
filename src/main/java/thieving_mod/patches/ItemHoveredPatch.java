@@ -1,4 +1,4 @@
-package shoplifting_mod.patches;
+package thieving_mod.patches;
 
 import basemod.ReflectionHacks;
 import com.badlogic.gdx.Gdx;
@@ -17,7 +17,7 @@ import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
-import shoplifting_mod.ShopliftingMod;
+import thieving_mod.ThievingMod;
 
 public class ItemHoveredPatch {
     private static Object highlightedItem;
@@ -56,7 +56,7 @@ public class ItemHoveredPatch {
     }
 
     private static void CommonInsert(Object item) {
-        if (ShopliftingMod.isConfigKeyPressed()) {
+        if (ThievingMod.isConfigKeyPressed()) {
             highlightedItem = item;
         }
     }

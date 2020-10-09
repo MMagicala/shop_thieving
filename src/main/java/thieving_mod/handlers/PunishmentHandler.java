@@ -1,4 +1,4 @@
-package shoplifting_mod.handlers;
+package thieving_mod.handlers;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.*;
@@ -17,8 +17,8 @@ import com.megacrit.cardcrawl.shop.Merchant;
 import com.megacrit.cardcrawl.vfx.GainPennyEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
-import shoplifting_mod.Punishment;
-import shoplifting_mod.ShopliftingMod;
+import thieving_mod.Punishment;
+import thieving_mod.ThievingMod;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +36,7 @@ public class PunishmentHandler {
         }
         // TODO: use streams?
         int bound = punishmentPool.size();
-        int randomIndex = ShopliftingMod.random.nextInt(bound);
+        int randomIndex = ThievingMod.random.nextInt(bound);
         decidedPunishment = punishmentPool.get(randomIndex);
     }
 
@@ -79,7 +79,7 @@ public class PunishmentHandler {
                 break;
             case BLIGHT:
                 for(int i = 0; i < 3; i++) {
-                    int index = ShopliftingMod.random.nextInt(BlightHelper.blights.size());
+                    int index = ThievingMod.random.nextInt(BlightHelper.blights.size());
                     AbstractBlight blight = BlightHelper.getBlight(BlightHelper.blights.get(index));
                     AbstractDungeon.getCurrRoom().spawnBlightAndObtain(Settings.WIDTH / 2.0F, Settings.HEIGHT / 2.0F, blight);
                 }

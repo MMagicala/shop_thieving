@@ -1,24 +1,16 @@
-package shoplifting_mod.patches;
+package thieving_mod.patches;
 
 import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
 import com.megacrit.cardcrawl.cards.AbstractCard;
-import com.megacrit.cardcrawl.cards.DamageInfo;
-import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
-import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
-import shoplifting_mod.*;
-import shoplifting_mod.handlers.CutsceneHandler;
-import shoplifting_mod.handlers.PunishmentHandler;
-import shoplifting_mod.handlers.ShopliftingHandler;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import thieving_mod.*;
+import thieving_mod.handlers.ShopliftingHandler;
 
 public class ItemClickedPatch {
     // Hotkey + click listeners
@@ -71,7 +63,7 @@ public class ItemClickedPatch {
      * @param item the item being clicked on
      */
     private static SpireReturn<Void> CommonInsert(Object item) {
-        if (ShopliftingMod.isConfigKeyPressed()) {
+        if (ThievingMod.isConfigKeyPressed()) {
             ShopliftingHandler.attemptToSteal(item);
             // Return early
             return SpireReturn.Return(null);

@@ -1,4 +1,4 @@
-package shoplifting_mod.potions;
+package thieving_mod.potions;
 
 import basemod.abstracts.CustomPotion;
 import com.megacrit.cardcrawl.core.AbstractCreature;
@@ -7,11 +7,11 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.PowerTip;
 import com.megacrit.cardcrawl.localization.PotionStrings;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
-import shoplifting_mod.handlers.ShopliftingHandler;
-import shoplifting_mod.ShopliftingMod;
+import thieving_mod.handlers.ShopliftingHandler;
+import thieving_mod.ThievingMod;
 
 public class ThievingPotion extends CustomPotion {
-    public static final String POTION_ID = ShopliftingMod.makeID("ThievingPotion");
+    public static final String POTION_ID = ThievingMod.makeID("ThievingPotion");
 
     // TODO: how does this work?
     private static final PotionStrings potionStrings = CardCrawlGame.languagePack.getPotionString(POTION_ID);

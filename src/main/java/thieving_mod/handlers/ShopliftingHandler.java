@@ -1,6 +1,5 @@
-package shoplifting_mod.handlers;
+package thieving_mod.handlers;
 
-import com.badlogic.gdx.math.MathUtils;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.DamageInfo;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
@@ -10,9 +9,9 @@ import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
-import shoplifting_mod.DialoguePool;
-import shoplifting_mod.ItemStats;
-import shoplifting_mod.ShopliftingMod;
+import thieving_mod.DialoguePool;
+import thieving_mod.ItemStats;
+import thieving_mod.ThievingMod;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -79,7 +78,7 @@ public class ShopliftingHandler {
 
     public static void attemptToSteal(Object item){
         // Attempt to steal the item
-        float rollResult = ShopliftingMod.random.nextFloat();
+        float rollResult = ThievingMod.random.nextFloat();
         if (rollResult < ShopliftingHandler.getSuccessRate(item)) {
             // Success! Set flags to true
             isItemSuccessfullyStolen = true;
@@ -109,7 +108,7 @@ public class ShopliftingHandler {
             AbstractDungeon.player.damage(new DamageInfo(null, ShopliftingHandler.damageAmount, DamageInfo.DamageType.NORMAL));
 
             // Play sound
-            int coin = ShopliftingMod.random.nextInt(2);
+            int coin = ThievingMod.random.nextInt(2);
             String soundKey = coin == 1 ? "BLUNT_FAST" : "BLUNT_HEAVY";
             CardCrawlGame.sound.play(soundKey);
 

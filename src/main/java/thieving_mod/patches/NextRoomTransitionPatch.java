@@ -1,12 +1,12 @@
-package shoplifting_mod.patches;
+package thieving_mod.patches;
 
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.saveAndContinue.SaveFile;
-import shoplifting_mod.handlers.CutsceneHandler;
-import shoplifting_mod.handlers.PunishmentHandler;
-import shoplifting_mod.handlers.ShopliftingHandler;
+import thieving_mod.handlers.CutsceneHandler;
+import thieving_mod.handlers.PunishmentHandler;
+import thieving_mod.handlers.ShopliftingHandler;
 
 // Reset everything once we enter a new room
 @SpirePatch(

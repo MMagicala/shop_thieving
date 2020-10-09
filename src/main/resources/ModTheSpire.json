@@ -1,6 +1,6 @@
 {
-      "modid": "shoplifting_mod",
-  "name": "Shoplifting Mod",
+      "modid": "thieving_mod",
+  "name": "Thieving Mod",
   "author_list": ["MMagicala"],
   "description": "${project.description}",
   "version": "${project.version}",
