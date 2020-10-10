@@ -3,6 +3,8 @@ package thieving_mod.handlers;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
+import com.megacrit.cardcrawl.blights.AbstractBlight;
+import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.CardGroup;
 import com.megacrit.cardcrawl.cards.DamageInfo;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
@@ -11,10 +13,13 @@ import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.cutscenes.Cutscene;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.neow.NeowEvent;
+import com.megacrit.cardcrawl.helpers.BlightHelper;
+import com.megacrit.cardcrawl.potions.AbstractPotion;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.screens.select.GridCardSelectScreen;
 import com.megacrit.cardcrawl.shop.Merchant;
 import com.megacrit.cardcrawl.vfx.GainPennyEffect;
+import com.megacrit.cardcrawl.vfx.cardManip.PurgeCardEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import thieving_mod.Punishment;
@@ -24,6 +29,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+
+import static thieving_mod.Punishment.*;
 
 public class PunishmentHandler {
     public static Punishment decidedPunishment;
@@ -33,10 +41,21 @@ public class PunishmentHandler {
     public static void selectRandomPunishment() {
         // Randomly pick punishment in advance
         ArrayList<Punishment> punishmentPool = new ArrayList<>(Arrays.asList(Punishment.values()));
-        // Don't include lose all gold punishment if player has <100 gold
+        // TODO: use streams?
+        // Filter punishments
         if (AbstractDungeon.player.gold < 99) {
-            punishmentPool.remove(Punishment.LOSE_ALL_GOLD);
+            punishmentPool.remove(LOSE_ALL_GOLD);
         }
+        if (AbstractDungeon.player.potions.size() == 0) {
+            punishmentPool.remove(LOSE_POTION);
+        }
+        if (AbstractDungeon.player.relics.size() == 0) {
+            punishmentPool.remove(LOSE_RELIC);
+        }
+        if (AbstractDungeon.player.masterDeck.size() == 0) {
+            punishmentPool.remove(LOSE_CARD);
+        }
+
         int bound = punishmentPool.size();
         int randomIndex = ThievingMod.random.nextInt(bound);
         decidedPunishment = punishmentPool.get(randomIndex);
@@ -90,9 +109,35 @@ public class PunishmentHandler {
                     e.printStackTrace();
                 }
                 break;
+            case LOSE_CARD:
+                // Lose five cards
+/*
+                AbstractDungeon.topLevelEffects.add(new PurgeCardEffect(card, Settings.WIDTH / 2.0F, Settings.HEIGHT / 2.0F));
+                AbstractDungeon.player.masterDeck.removeCard(card);
+*/
+                break;
+            case LOSE_POTION:
+                // Remove all potions
+                Iterator<AbstractPotion> itr = AbstractDungeon.player.potions.iterator();
+                while (itr.hasNext()) {
+                    AbstractDungeon.player.removePotion(itr.next());
+                }
+                break;
+            case LOSE_RELIC:
+                // Steal a relic
+                int index = ThievingMod.random.nextInt(AbstractDungeon.player.relics.size());
+                String relicId = AbstractDungeon.player.relics.get(index).relicId;
+                AbstractDungeon.player.loseRelic(relicId);
+                break;
+        }
+        // Set flag
+        if(decidedPunishment != Punishment.CURSES)
+        {
+            isPunishmentIssued = true;
         }
         isPunishmentIssued = true;
     }
+
 
     @SpirePatch(
             clz = NeowEvent.class,
@@ -157,11 +202,11 @@ public class PunishmentHandler {
             }
         }
 
-        private static class CloseCurrentScreenLocator extends SpireInsertLocator {
-            public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
-                Matcher matcher = new Matcher.MethodCallMatcher(AbstractDungeon.class, "closeCurrentScreen");
-                return LineFinder.findInOrder(ctMethodToPatch, matcher);
-            }
+    private static class CloseCurrentScreenLocator extends SpireInsertLocator {
+        public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
+            Matcher matcher = new Matcher.MethodCallMatcher(AbstractDungeon.class, "closeCurrentScreen");
+            return LineFinder.findInOrder(ctMethodToPatch, matcher);
         }
     }
+}
 }

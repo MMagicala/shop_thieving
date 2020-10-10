@@ -79,7 +79,7 @@ public class ShopliftingHandler {
     public static void attemptToSteal(Object item){
         // Attempt to steal the item
         float rollResult = ThievingMod.random.nextFloat();
-        if (rollResult < ShopliftingHandler.getSuccessRate(item)) {
+        if (rollResult < getSuccessRate(item)) {
             // Success! Set flags to true
             isItemSuccessfullyStolen = true;
 
@@ -118,7 +118,7 @@ public class ShopliftingHandler {
 
             // Kick player out of shop
             AbstractDungeon.closeCurrentScreen();
-            ShopliftingHandler.isPlayerKickedOut = true;
+            isPlayerKickedOut = true;
 
             PunishmentHandler.selectRandomPunishment();
 
