@@ -28,7 +28,7 @@ public class ShopliftingHandler {
 
     // Stats
     public static float successRateMultiplier = 1;
-    public static final int damageAmount = 20;
+    public static final int DAMAGE_AMOUNT = 0; //20;
 
     // Probability tables
     private static final HashMap<AbstractPotion.PotionRarity, Float> potionProbabilities = new HashMap<AbstractPotion.PotionRarity, Float>(){
@@ -79,7 +79,7 @@ public class ShopliftingHandler {
     public static void attemptToSteal(Object item){
         // Attempt to steal the item
         float rollResult = ThievingMod.random.nextFloat();
-        if (rollResult < ShopliftingHandler.getSuccessRate(item)) {
+        if (rollResult < getSuccessRate(item)) {
             // Success! Set flags to true
             isItemSuccessfullyStolen = true;
 
@@ -105,7 +105,7 @@ public class ShopliftingHandler {
             }
         } else {
             // If caught, take damage
-            AbstractDungeon.player.damage(new DamageInfo(null, ShopliftingHandler.damageAmount, DamageInfo.DamageType.NORMAL));
+            AbstractDungeon.player.damage(new DamageInfo(null, DAMAGE_AMOUNT, DamageInfo.DamageType.NORMAL));
 
             // Play sound
             int coin = ThievingMod.random.nextInt(2);
@@ -118,7 +118,7 @@ public class ShopliftingHandler {
 
             // Kick player out of shop
             AbstractDungeon.closeCurrentScreen();
-            ShopliftingHandler.isKickedOut = true;
+            isKickedOut = true;
 
             PunishmentHandler.selectRandomPunishment();
 
