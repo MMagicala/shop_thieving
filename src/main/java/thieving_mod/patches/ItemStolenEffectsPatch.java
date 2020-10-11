@@ -1,22 +1,31 @@
 package thieving_mod.patches;
 
+import basemod.ReflectionHacks;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
+import com.megacrit.cardcrawl.helpers.FontHelper;
+import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
+import com.megacrit.cardcrawl.vfx.AbstractGameEffect;
 import com.megacrit.cardcrawl.vfx.TextAboveCreatureEffect;
+import com.megacrit.cardcrawl.vfx.combat.SmokeBlurEffect;
 import com.megacrit.cardcrawl.vfx.combat.SmokeBombEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
+import javassist.CtField;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
 import thieving_mod.handlers.ShopliftingHandler;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 // Patch purchase item methods
@@ -156,6 +165,7 @@ public class ItemStolenEffectsPatch {
         }
     }
 
+    // Render smoke bomb particles as top level, not regular level
     @SpirePatch(
             clz = SmokeBombEffect.class,
             method = "update"
@@ -176,6 +186,7 @@ public class ItemStolenEffectsPatch {
             };
         }
 
+        // Play text Item Stolen after all particles have been added to the queue
         @SpirePostfixPatch
         public static void Postfix() {
             if (ShopliftingHandler.isItemSuccessfullyStolen) {
@@ -183,5 +194,55 @@ public class ItemStolenEffectsPatch {
                 AbstractDungeon.topLevelEffectsQueue.add(new TextAboveCreatureEffect(ShopliftingHandler.prevItemX, ShopliftingHandler.prevItemY, "Item stolen!", Color.WHITE));
             }
         }
+    }
+
+    // Hide smoke bomb effect if we leave the shop screen
+    @SpirePatch(
+            clz = SmokeBlurEffect.class,
+            method = "render"
+    )
+    public static class SmokeBlurEffectRenderPatch{
+        @SpireInsertPatch(
+                locator = DrawLocator.class
+        )
+        public static SpireReturn<Void> Patch(SmokeBlurEffect __instance, SpriteBatch sb){
+            return CommonInsert();
+        }
+
+        private static class DrawLocator extends SpireInsertLocator {
+            public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
+                Matcher matcher = new Matcher.MethodCallMatcher(SpriteBatch.class, "draw");
+                return LineFinder.findInOrder(ctMethodToPatch, matcher);
+            }
+        }
+    }
+
+    // Hide text above creature effect if we leave the shop screen
+    @SpirePatch(
+            clz = TextAboveCreatureEffect.class,
+            method = "render"
+    )
+    public static class TextRenderPatch{
+        @SpireInsertPatch(
+                locator = FontRenderLocator.class
+        )
+        public static SpireReturn<Void> Patch(TextAboveCreatureEffect __instance, SpriteBatch sb){
+            return CommonInsert();
+        }
+
+        private static class FontRenderLocator extends SpireInsertLocator {
+            public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
+                Matcher matcher = new Matcher.MethodCallMatcher(FontHelper.class, "renderFontCentered");
+                return LineFinder.findInOrder(ctMethodToPatch, matcher);
+            }
+        }
+    }
+
+    private static SpireReturn<Void> CommonInsert(){
+        if(AbstractDungeon.getCurrRoom().getClass() == ShopRoom.class
+                && AbstractDungeon.screen != AbstractDungeon.CurrentScreen.SHOP) {
+            return SpireReturn.Return(null);
+        }
+        return SpireReturn.Continue();
     }
 }
