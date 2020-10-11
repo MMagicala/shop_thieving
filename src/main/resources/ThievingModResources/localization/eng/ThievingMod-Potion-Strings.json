@@ -1,6 +1,6 @@
 {
 "ThievingMod:ThievingPotion": {
         "NAME": "Thieving Potion",
-        "DESCRIPTIONS": ["Double your chances to successfully steal items this turn."]
+        "DESCRIPTIONS": ["Increase your chances to successfully steal items by ", " this turn."]
 }
 }

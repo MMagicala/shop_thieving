@@ -22,18 +22,15 @@ public class ThievingPotion extends CustomPotion {
         // The bottle shape and inside is determined by potion size and color. The actual colors are the main DefaultMod.java
         super(NAME, POTION_ID, PotionRarity.RARE, PotionSize.M, PotionColor.SMOKE);
 
-        // Potency is the damage/magic number equivalent of potions.
-        potency = getPotency();
-
-        // Initialize the description
-        description = DESCRIPTIONS[0];
-
         // Do you throw this potion at an enemy or do you just consume it.
         isThrown = false;
+    }
 
-        // Initialize the on-hover name + description
-        tips.add(new PowerTip(name, description));
-
+    public void initializeData(){
+        potency = getPotency();
+        description = DESCRIPTIONS[0] + potency + DESCRIPTIONS[1];
+        tips.clear();
+        tips.add(new PowerTip(this.name, this.description));
     }
 
     public boolean canUse() {
