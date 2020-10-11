@@ -23,7 +23,7 @@ public class MerchantClickedPatch {
     public static SpireReturn<Void> Insert(Merchant __instance) {
         if (ShopliftingHandler.isKickedOut && PunishmentHandler.isPunishmentIssued && CutsceneHandler.isDialogueFinished()) {
             // Play custom merchant dialogue once clicked
-            CutsceneHandler.enqueueMerchantDialogue(DialoguePool.FORBID, 5f);
+            CutsceneHandler.enqueueMerchantDialogue(DialoguePool.FORBID);
         }
         // Don't let player enter shop if they were kicked out
         return ShopliftingHandler.isKickedOut ? SpireReturn.Return(null) : SpireReturn.Continue();

@@ -4,6 +4,7 @@ import basemod.ReflectionHacks;
 import com.badlogic.gdx.Gdx;
 import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
+import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
@@ -15,10 +16,12 @@ import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
+import thieving_mod.Dialogue;
 import thieving_mod.DialoguePool;
 import thieving_mod.Punishment;
 import thieving_mod.ThievingMod;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 
 public class CutsceneHandler {
@@ -26,21 +29,6 @@ public class CutsceneHandler {
     private static float currentDialogueTime;
 
     // Merchant dialogue
-
-    private static class Dialogue {
-        private final float x;
-        private final float y;
-        private final String text;
-        private final float duration;
-
-        public Dialogue(float x, float y, String text, float duration) {
-            this.x = x;
-            this.y = y;
-            this.text = text;
-            this.duration = duration;
-        }
-    }
-
     // Hide proceed button while dialogue in progress
     @SpirePatch(
             clz = ProceedButton.class,
@@ -98,8 +86,11 @@ public class CutsceneHandler {
                         // Once time runs out, make merchant talk
                         Dialogue dialogue = dialogueQueue.poll();
                         assert dialogue != null;
-                        AbstractDungeon.effectList.add(new SpeechBubble(dialogue.x, dialogue.y, 3.0F,
+                        Merchant merchant = ((ShopRoom) (AbstractDungeon.getCurrRoom())).merchant;
+                        AbstractDungeon.effectList.add(new SpeechBubble(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, 3.0F,
                                 dialogue.text, false));
+                        // Play his sfx
+                        CardCrawlGame.sound.play(dialogue.sfxKey);
                         // Reset timer
                         currentDialogueTime = dialogue.duration;
                     } else if (!PunishmentHandler.isPunishmentIssued) {
@@ -118,17 +109,20 @@ public class CutsceneHandler {
         }
     }
 
-    public static void enqueueMerchantDialogue(DialoguePool dialoguePool, float duration) {
-        Merchant merchant = ((ShopRoom) (AbstractDungeon.getCurrRoom())).merchant;
+    /**
+     * Chooses a random dialogue from the pool
+     */
+    public static void enqueueMerchantDialogue(DialoguePool dialoguePool) {
         int index = ThievingMod.random.nextInt(dialoguePool.values.length);
-        dialogueQueue.add(new Dialogue(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, dialoguePool.values[index], duration));
+        dialogueQueue.add(new Dialogue( dialoguePool.values[index].text,dialoguePool.values[index].duration));
     }
 
-    public static void enqueueMerchantDialogue(Punishment punishment, float duration) {
-        Merchant merchant = ((ShopRoom) (AbstractDungeon.getCurrRoom())).merchant;
-        for(String dialogue: punishment.dialogue){
-            dialogueQueue.add(new Dialogue(merchant.hb.cX - 50.0F * Settings.scale, merchant.hb.cY + 70.0F * Settings.scale, dialogue, duration));
-        }
+    /**
+     * Enqueue all the dialogue for that punishment
+     * @param punishment Contains the merchant dialogue
+     */
+    public static void enqueueMerchantDialogue(Punishment punishment) {
+        dialogueQueue.addAll(Arrays.asList(punishment.dialogue));
     }
 
     /**

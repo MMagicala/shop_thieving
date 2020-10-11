@@ -28,7 +28,7 @@ public class ShopliftingHandler {
 
     // Stats
     public static float successRateMultiplier = 1;
-    public static final int damageAmount = 20;
+    public static final int damageAmount = 0;
 
     // Probability tables
     private static final HashMap<AbstractPotion.PotionRarity, Float> potionProbabilities = new HashMap<AbstractPotion.PotionRarity, Float>(){
@@ -123,8 +123,8 @@ public class ShopliftingHandler {
             PunishmentHandler.selectRandomPunishment();
 
             // Load shopkeeper dialogue
-            CutsceneHandler.enqueueMerchantDialogue(DialoguePool.CAUGHT, 2.5f);
-            CutsceneHandler.enqueueMerchantDialogue(PunishmentHandler.decidedPunishment, 3f);
+            CutsceneHandler.enqueueMerchantDialogue(DialoguePool.CAUGHT);
+            CutsceneHandler.enqueueMerchantDialogue(PunishmentHandler.decidedPunishment);
         }
     }
 }
