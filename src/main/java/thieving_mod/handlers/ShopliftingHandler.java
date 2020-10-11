@@ -28,7 +28,7 @@ public class ShopliftingHandler {
 
     // Stats
     public static float successRateMultiplier = 1;
-    public static final int damageAmount = 0;
+    public static final int damageAmount = 20;
 
     // Probability tables
     private static final HashMap<AbstractPotion.PotionRarity, Float> potionProbabilities = new HashMap<AbstractPotion.PotionRarity, Float>(){
