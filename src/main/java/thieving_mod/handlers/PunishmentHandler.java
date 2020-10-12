@@ -43,6 +43,7 @@ public class PunishmentHandler {
     public static Punishment decidedPunishment;
     public static boolean isPunishmentIssued = false;
     private static boolean dontInitializeNeowEvent = false;
+    private static final int RELIC_STEAL_COUNT = 2;
 
     public static void selectRandomPunishment() {
         // Randomly pick punishment in advance
@@ -51,14 +52,16 @@ public class PunishmentHandler {
         if (AbstractDungeon.player.gold < 99) {
             punishmentPool.remove(LOSE_ALL_GOLD);
         }
-        if (AbstractDungeon.player.potions.size() == 0) {
+        if (!AbstractDungeon.player.hasAnyPotions()) {
             punishmentPool.remove(LOSE_POTION);
         }
-        if (AbstractDungeon.player.relics.size() == 0) {
+        if (AbstractDungeon.player.relics.size() < RELIC_STEAL_COUNT) {
             punishmentPool.remove(LOSE_RELIC);
+
         }
-        if (AbstractDungeon.player.masterDeck.size() == 0) {
+        if (AbstractDungeon.player.masterDeck.isEmpty()) {
             punishmentPool.remove(LOSE_CARD);
+
         }
 
         int bound = punishmentPool.size();
@@ -118,9 +121,9 @@ public class PunishmentHandler {
                 // Lose 5 cards
                 int count = 0;
                 while(count < 5) {
-                    if(AbstractDungeon.player.masterDeck.isEmpty()) break;
                     AbstractDungeon.player.masterDeck.removeTopCard();
                     count++;
+                    if(AbstractDungeon.player.masterDeck.isEmpty()) break;
                 }
                 if(count > 0) playLoseEffect( AbstractDungeon.topPanel.deckHb.x, AbstractDungeon.topPanel.deckHb.y);
                 break;
@@ -135,7 +138,7 @@ public class PunishmentHandler {
                 break;
             case LOSE_RELIC:
                 // Steal 2 relics
-                for(int i = 0; i < 2; i++) {
+                for(int i = 0; i < RELIC_STEAL_COUNT; i++) {
                     int index = ThievingMod.random.nextInt(AbstractDungeon.player.relics.size());
                     AbstractRelic relic = AbstractDungeon.player.relics.get(index);
                     AbstractDungeon.player.loseRelic(relic.relicId);
