@@ -16,6 +16,7 @@ import com.megacrit.cardcrawl.helpers.BlightHelper;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
 import com.megacrit.cardcrawl.potions.PotionSlot;
+import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.screens.select.GridCardSelectScreen;
 import com.megacrit.cardcrawl.shop.Merchant;
@@ -59,7 +60,7 @@ public class PunishmentHandler {
 
         int bound = punishmentPool.size();
         int randomIndex = ThievingMod.random.nextInt(bound);
-        decidedPunishment = LOSE_POTION; //punishmentPool.get(randomIndex);
+        decidedPunishment = LOSE_RELIC; //punishmentPool.get(randomIndex);
     }
 
     public static void issuePunishment() {
@@ -117,26 +118,31 @@ public class PunishmentHandler {
                 for (AbstractPotion abstractPotion : AbstractDungeon.player.potions) {
                     if (!(abstractPotion instanceof PotionSlot)) {
                         AbstractDungeon.player.removePotion(abstractPotion);
-                        CardCrawlGame.sound.play("CARD_EXHAUST", 0.2F);
-                        int i;
-                        for (i = 0; i < 90; i++)
-                            AbstractDungeon.topLevelEffectsQueue.add(new ExhaustBlurEffect(abstractPotion.posX, abstractPotion.posY));
-                        for (i = 0; i < 50; i++)
-                            AbstractDungeon.topLevelEffectsQueue.add(new ExhaustEmberEffect(abstractPotion.posX, abstractPotion.posY));
+                        playLoseEffect(abstractPotion.posX, abstractPotion.posY);
                     }
                 }
                 break;
             case LOSE_RELIC:
                 // Steal a relic
                 int index = ThievingMod.random.nextInt(AbstractDungeon.player.relics.size());
-                String relicId = AbstractDungeon.player.relics.get(index).relicId;
-                AbstractDungeon.player.loseRelic(relicId);
+                AbstractRelic relic = AbstractDungeon.player.relics.get(index);
+                AbstractDungeon.player.loseRelic(relic.relicId);
+                playLoseEffect(relic.currentX, relic.currentY);
                 break;
         }
         // Set flag
         if (decidedPunishment != Punishment.CURSES) {
             isPunishmentIssued = true;
         }
+    }
+
+    private static void playLoseEffect(float x, float y){
+        CardCrawlGame.sound.play("CARD_EXHAUST", 0.2F);
+        int i;
+        for (i = 0; i < 90; i++)
+            AbstractDungeon.topLevelEffectsQueue.add(new ExhaustBlurEffect(x, y));
+        for (i = 0; i < 50; i++)
+            AbstractDungeon.topLevelEffectsQueue.add(new ExhaustEmberEffect(x, y));
     }
 
     // Set punishment issued flag to true once curses are received
