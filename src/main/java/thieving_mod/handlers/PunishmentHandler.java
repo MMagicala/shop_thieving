@@ -47,7 +47,6 @@ public class PunishmentHandler {
     public static void selectRandomPunishment() {
         // Randomly pick punishment in advance
         ArrayList<Punishment> punishmentPool = new ArrayList<>(Arrays.asList(Punishment.values()));
-        // TODO: use streams?
         // Filter punishments
         if (AbstractDungeon.player.gold < 99) {
             punishmentPool.remove(LOSE_ALL_GOLD);
@@ -135,11 +134,13 @@ public class PunishmentHandler {
                 }
                 break;
             case LOSE_RELIC:
-                // Steal a relic
-                int index = ThievingMod.random.nextInt(AbstractDungeon.player.relics.size());
-                AbstractRelic relic = AbstractDungeon.player.relics.get(index);
-                AbstractDungeon.player.loseRelic(relic.relicId);
-                playLoseEffect(relic.currentX, relic.currentY);
+                // Steal 2 relics
+                for(int i = 0; i < 2; i++) {
+                    int index = ThievingMod.random.nextInt(AbstractDungeon.player.relics.size());
+                    AbstractRelic relic = AbstractDungeon.player.relics.get(index);
+                    AbstractDungeon.player.loseRelic(relic.relicId);
+                    playLoseEffect(relic.currentX, relic.currentY);
+                }
                 break;
         }
         // Set flag
