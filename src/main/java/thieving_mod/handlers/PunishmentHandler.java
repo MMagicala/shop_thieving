@@ -14,11 +14,16 @@ import com.megacrit.cardcrawl.cutscenes.Cutscene;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.neow.NeowEvent;
 import com.megacrit.cardcrawl.helpers.BlightHelper;
+import com.megacrit.cardcrawl.monsters.AbstractMonster;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
+import com.megacrit.cardcrawl.potions.PotionSlot;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.screens.select.GridCardSelectScreen;
 import com.megacrit.cardcrawl.shop.Merchant;
+import com.megacrit.cardcrawl.vfx.ExhaustBlurEffect;
+import com.megacrit.cardcrawl.vfx.ExhaustEmberEffect;
 import com.megacrit.cardcrawl.vfx.GainPennyEffect;
+import com.megacrit.cardcrawl.vfx.cardManip.ExhaustCardEffect;
 import com.megacrit.cardcrawl.vfx.cardManip.PurgeCardEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
@@ -58,7 +63,7 @@ public class PunishmentHandler {
 
         int bound = punishmentPool.size();
         int randomIndex = ThievingMod.random.nextInt(bound);
-        decidedPunishment = punishmentPool.get(randomIndex);
+        decidedPunishment = LOSE_POTION; //punishmentPool.get(randomIndex);
     }
 
     public static void issuePunishment() {
@@ -118,9 +123,16 @@ public class PunishmentHandler {
                 break;
             case LOSE_POTION:
                 // Remove all potions
-                Iterator<AbstractPotion> itr = AbstractDungeon.player.potions.iterator();
-                while (itr.hasNext()) {
-                    AbstractDungeon.player.removePotion(itr.next());
+                for (AbstractPotion abstractPotion : AbstractDungeon.player.potions) {
+                    if (!(abstractPotion instanceof PotionSlot)) {
+                        AbstractDungeon.player.removePotion(abstractPotion);
+                        CardCrawlGame.sound.play("CARD_EXHAUST", 0.2F);
+                        int i;
+                        for (i = 0; i < 90; i++)
+                            AbstractDungeon.topLevelEffectsQueue.add(new ExhaustBlurEffect(abstractPotion.posX, abstractPotion.posY));
+                        for (i = 0; i < 50; i++)
+                            AbstractDungeon.topLevelEffectsQueue.add(new ExhaustEmberEffect(abstractPotion.posX, abstractPotion.posY));
+                    }
                 }
                 break;
             case LOSE_RELIC:
@@ -131,22 +143,20 @@ public class PunishmentHandler {
                 break;
         }
         // Set flag
-        if(decidedPunishment != Punishment.CURSES)
-        {
+        if (decidedPunishment != Punishment.CURSES) {
             isPunishmentIssued = true;
         }
         isPunishmentIssued = true;
     }
 
-
     @SpirePatch(
             clz = NeowEvent.class,
             method = "uniqueBlight"
     )
-    public static class UniqueBlightPatch{
+    public static class UniqueBlightPatch {
         // Set punishment issued flag to true once we receive blights
         @SpirePrefixPatch
-        public static void patch(NeowEvent __instance){
+        public static void patch(NeowEvent __instance) {
             if (ShopliftingHandler.isPlayerKickedOut) {
                 CutsceneHandler.showProceedButton = true;
             }
@@ -202,11 +212,11 @@ public class PunishmentHandler {
             }
         }
 
-    private static class CloseCurrentScreenLocator extends SpireInsertLocator {
-        public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
-            Matcher matcher = new Matcher.MethodCallMatcher(AbstractDungeon.class, "closeCurrentScreen");
-            return LineFinder.findInOrder(ctMethodToPatch, matcher);
+        private static class CloseCurrentScreenLocator extends SpireInsertLocator {
+            public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
+                Matcher matcher = new Matcher.MethodCallMatcher(AbstractDungeon.class, "closeCurrentScreen");
+                return LineFinder.findInOrder(ctMethodToPatch, matcher);
+            }
         }
     }
-}
 }
