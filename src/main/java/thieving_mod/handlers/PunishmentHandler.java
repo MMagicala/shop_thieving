@@ -107,11 +107,14 @@ public class PunishmentHandler {
                 }
                 break;
             case LOSE_CARD:
-                // Lose five cards
-/*
-                AbstractDungeon.topLevelEffects.add(new PurgeCardEffect(card, Settings.WIDTH / 2.0F, Settings.HEIGHT / 2.0F));
-                AbstractDungeon.player.masterDeck.removeCard(card);
-*/
+                // Lose 5 cards
+                int count = 0;
+                while(count < 5) {
+                    if(AbstractDungeon.player.masterDeck.isEmpty()) break;
+                    AbstractDungeon.player.masterDeck.removeTopCard();
+                    count++;
+                }
+                if(count > 0) playLoseEffect( AbstractDungeon.topPanel.deckHb.x, AbstractDungeon.topPanel.deckHb.y);
                 break;
             case LOSE_POTION:
                 // Remove all potions
