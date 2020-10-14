@@ -36,6 +36,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static thieving_mod.Punishment.*;
 
@@ -44,6 +46,9 @@ public class PunishmentHandler {
     public static boolean isPunishmentIssued = false;
     private static boolean dontInitializeNeowEvent = false;
     private static final int RELIC_STEAL_COUNT = 2;
+    private static final int CARD_STEAL_COUNT = 5;
+    private static final int BLIGHT_COUNT = 3;
+    private static final ArrayList<AbstractCard> cardsToSteal = new ArrayList<>();
 
     public static void selectRandomPunishment() {
         // Randomly pick punishment in advance
@@ -59,14 +64,22 @@ public class PunishmentHandler {
             punishmentPool.remove(LOSE_RELIC);
 
         }
-        if (AbstractDungeon.player.masterDeck.isEmpty()) {
+        // Get last five cards in deck excluding curses
+        cardsToSteal.clear();
+        ArrayList<AbstractCard> deck = AbstractDungeon.player.masterDeck.group;
+        for (int i = 0; i < deck.size() && cardsToSteal.size() < CARD_STEAL_COUNT; i++) {
+            if (deck.get(deck.size() - 1 - i).type != AbstractCard.CardType.CURSE) {
+                cardsToSteal.add(deck.get(deck.size() - 1 - i));
+            }
+        }
+        ;
+        if (cardsToSteal.size() < CARD_STEAL_COUNT) {
             punishmentPool.remove(LOSE_CARD);
-
         }
 
         int bound = punishmentPool.size();
         int randomIndex = ThievingMod.random.nextInt(bound);
-        decidedPunishment = LOSE_RELIC; //punishmentPool.get(randomIndex);
+        decidedPunishment = punishmentPool.get(randomIndex);
     }
 
     public static void issuePunishment() {
@@ -119,26 +132,25 @@ public class PunishmentHandler {
                 break;
             case LOSE_CARD:
                 // Lose 5 cards
-                int count = 0;
-                while(count < 5) {
-                    AbstractDungeon.player.masterDeck.removeTopCard();
-                    count++;
-                    if(AbstractDungeon.player.masterDeck.isEmpty()) break;
+                int i;
+                for (AbstractCard card : cardsToSteal) {
+                    AbstractDungeon.player.masterDeck.removeCard(card);
                 }
-                if(count > 0) playLoseEffect( AbstractDungeon.topPanel.deckHb.x, AbstractDungeon.topPanel.deckHb.y);
+                playLoseEffect(AbstractDungeon.topPanel.deckHb.x, AbstractDungeon.topPanel.deckHb.y);
                 break;
             case LOSE_POTION:
                 // Remove all potions
-                for (AbstractPotion abstractPotion : AbstractDungeon.player.potions) {
-                    if (!(abstractPotion instanceof PotionSlot)) {
-                        AbstractDungeon.player.removePotion(abstractPotion);
-                        playLoseEffect(abstractPotion.posX, abstractPotion.posY);
-                    }
+                List<AbstractPotion> potionsToRemove = AbstractDungeon.player.potions.stream()
+                        .filter(potion -> !(potion instanceof PotionSlot)).collect(Collectors.toList());
+                for (AbstractPotion potion : potionsToRemove) {
+                    // Set potion to potion slot and play fx
+                    AbstractDungeon.player.removePotion(potion);
+                    playLoseEffect(potion.posX, potion.posY);
                 }
                 break;
             case LOSE_RELIC:
                 // Steal 2 relics
-                for(int i = 0; i < RELIC_STEAL_COUNT; i++) {
+                for (int j = 0; j < RELIC_STEAL_COUNT; j++) {
                     int index = ThievingMod.random.nextInt(AbstractDungeon.player.relics.size());
                     AbstractRelic relic = AbstractDungeon.player.relics.get(index);
                     AbstractDungeon.player.loseRelic(relic.relicId);
@@ -201,7 +213,7 @@ public class PunishmentHandler {
         }
     }
 
-    private static void playLoseEffect(float x, float y){
+    private static void playLoseEffect(float x, float y) {
         CardCrawlGame.sound.play("CARD_EXHAUST", 0.2F);
         int i;
         for (i = 0; i < 90; i++)

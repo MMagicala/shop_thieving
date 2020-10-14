@@ -28,7 +28,11 @@ public class ShopliftingHandler {
 
     // Stats
     public static float successRateMultiplier = 1;
+<<<<<<< HEAD
     private static final int DAMAGE_AMOUNT = 20;
+=======
+    public static final int DAMAGE_AMOUNT = 20;
+>>>>>>> 37dd955... dont include curses when removing cards
 
     // Probability tables
     private static final HashMap<AbstractPotion.PotionRarity, Float> potionProbabilities = new HashMap<AbstractPotion.PotionRarity, Float>(){
