@@ -11,6 +11,7 @@ import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.BlightHelper;
+import com.megacrit.cardcrawl.neow.NeowEvent;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.screens.select.GridCardSelectScreen;
 import com.megacrit.cardcrawl.shop.Merchant;
@@ -20,12 +21,15 @@ import javassist.CtBehavior;
 import thieving_mod.Punishment;
 import thieving_mod.ThievingMod;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class PunishmentHandler {
     public static Punishment decidedPunishment;
     public static boolean isPunishmentIssued = false;
+    private static boolean dontInitializeNeowEvent = false;
 
     public static void selectRandomPunishment(){
         // Randomly pick punishment in advance
@@ -78,17 +82,36 @@ public class PunishmentHandler {
                 AbstractDungeon.gridSelectScreen.openConfirmationGrid(cardGroup, "You shoplifted!");
                 break;
             case BLIGHT:
-                for(int i = 0; i < 3; i++) {
-                    int index = ThievingMod.random.nextInt(BlightHelper.blights.size());
-                    AbstractBlight blight = BlightHelper.getBlight(BlightHelper.blights.get(index));
-                    AbstractDungeon.getCurrRoom().spawnBlightAndObtain(Settings.WIDTH / 2.0F, Settings.HEIGHT / 2.0F, blight);
+                try {
+                    Method endlessBlight = NeowEvent.class.getDeclaredMethod("endlessBlight");
+                    endlessBlight.setAccessible(true);
+                    dontInitializeNeowEvent = true;
+                    endlessBlight.invoke(new NeowEvent());
+                    dontInitializeNeowEvent = false;
+                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
                 }
                 isPunishmentIssued = true;
                 break;
         }
     }
 
-    // Set punishment issued flag to true once curses are received
+    @SpirePatch(
+            clz = NeowEvent.class,
+            method=SpirePatch.CONSTRUCTOR,
+            paramtypez={boolean.class}
+    )
+    public static class NeowEventConstructorPatch {
+        @SpirePrefixPatch
+        public static SpireReturn<Void> patch(NeowEvent __instance, boolean isDone){
+            if(dontInitializeNeowEvent){
+                return SpireReturn.Return(null);
+            }
+            return SpireReturn.Continue();
+        }
+    }
+
+        // Set punishment issued flag to true once curses are received
     @SpirePatch(
             clz = GridCardSelectScreen.class,
             method="update"
