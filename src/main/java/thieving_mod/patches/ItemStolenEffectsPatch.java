@@ -10,6 +10,7 @@ import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
+import com.megacrit.cardcrawl.potions.SmokeBomb;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
@@ -187,11 +188,21 @@ public class ItemStolenEffectsPatch {
         }
 
         // Show "Item Stolen" text after all particles have been added to the queue
-        @SpirePostfixPatch
-        public static void Postfix() {
-            if (ShopliftingHandler.isItemSuccessfullyStolen) {
+        @SpireInsertPatch(
+                locator = BeforeDurationUpdateLocator.class
+        )
+        public static void Insert(SmokeBombEffect __instance) {
+            if (__instance.duration == 0.2f && ShopliftingHandler.isItemSuccessfullyStolen) {
                 ShopliftingHandler.isItemSuccessfullyStolen = false;
                 AbstractDungeon.topLevelEffectsQueue.add(new TextAboveCreatureEffect(ShopliftingHandler.prevItemX, ShopliftingHandler.prevItemY, "Item stolen!", Color.WHITE));
+            }
+        }
+
+        private static class BeforeDurationUpdateLocator extends SpireInsertLocator {
+            public int[] Locate(CtBehavior ctFieldToPatch) throws CannotCompileException, PatchingException {
+                Matcher matcher = new Matcher.FieldAccessMatcher(SmokeBombEffect.class, "duration");
+                int[] results = LineFinder.findAllInOrder(ctFieldToPatch, matcher);
+                return new int[]{results[1]};
             }
         }
     }
@@ -201,11 +212,11 @@ public class ItemStolenEffectsPatch {
             clz = SmokeBlurEffect.class,
             method = "render"
     )
-    public static class SmokeBlurEffectRenderPatch{
+    public static class SmokeBlurEffectRenderPatch {
         @SpireInsertPatch(
                 locator = DrawLocator.class
         )
-        public static SpireReturn<Void> Patch(SmokeBlurEffect __instance, SpriteBatch sb){
+        public static SpireReturn<Void> Patch(SmokeBlurEffect __instance, SpriteBatch sb) {
             return CommonInsert();
         }
 
@@ -222,11 +233,11 @@ public class ItemStolenEffectsPatch {
             clz = TextAboveCreatureEffect.class,
             method = "render"
     )
-    public static class TextRenderPatch{
+    public static class TextRenderPatch {
         @SpireInsertPatch(
                 locator = FontRenderLocator.class
         )
-        public static SpireReturn<Void> Patch(TextAboveCreatureEffect __instance, SpriteBatch sb){
+        public static SpireReturn<Void> Patch(TextAboveCreatureEffect __instance, SpriteBatch sb) {
             return CommonInsert();
         }
 
@@ -238,8 +249,8 @@ public class ItemStolenEffectsPatch {
         }
     }
 
-    private static SpireReturn<Void> CommonInsert(){
-        if(AbstractDungeon.getCurrRoom().getClass() == ShopRoom.class
+    private static SpireReturn<Void> CommonInsert() {
+        if (AbstractDungeon.getCurrRoom().getClass() == ShopRoom.class
                 && AbstractDungeon.screen != AbstractDungeon.CurrentScreen.SHOP) {
             return SpireReturn.Return(null);
         }
