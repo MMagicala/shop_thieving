@@ -14,7 +14,6 @@ import com.megacrit.cardcrawl.cutscenes.Cutscene;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.neow.NeowEvent;
 import com.megacrit.cardcrawl.helpers.BlightHelper;
-import com.megacrit.cardcrawl.monsters.AbstractMonster;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
 import com.megacrit.cardcrawl.potions.PotionSlot;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
@@ -24,8 +23,6 @@ import com.megacrit.cardcrawl.shop.Merchant;
 import com.megacrit.cardcrawl.vfx.ExhaustBlurEffect;
 import com.megacrit.cardcrawl.vfx.ExhaustEmberEffect;
 import com.megacrit.cardcrawl.vfx.GainPennyEffect;
-import com.megacrit.cardcrawl.vfx.cardManip.ExhaustCardEffect;
-import com.megacrit.cardcrawl.vfx.cardManip.PurgeCardEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import thieving_mod.Punishment;
@@ -58,11 +55,10 @@ public class PunishmentHandler {
             punishmentPool.remove(LOSE_ALL_GOLD);
         }
         if (!AbstractDungeon.player.hasAnyPotions()) {
-            punishmentPool.remove(LOSE_POTION);
+            punishmentPool.remove(LOSE_POTIONS);
         }
         if (AbstractDungeon.player.relics.size() < RELIC_STEAL_COUNT) {
-            punishmentPool.remove(LOSE_RELIC);
-
+            punishmentPool.remove(LOSE_RELICS);
         }
         // Get last five cards in deck excluding curses
         cardsToSteal.clear();
@@ -71,10 +67,10 @@ public class PunishmentHandler {
             if (deck.get(deck.size() - 1 - i).type != AbstractCard.CardType.CURSE) {
                 cardsToSteal.add(deck.get(deck.size() - 1 - i));
             }
-        }
-        ;
+        };
+        // Filter lose cards punishment if we can't burn enough cards
         if (cardsToSteal.size() < CARD_STEAL_COUNT) {
-            punishmentPool.remove(LOSE_CARD);
+            punishmentPool.remove(LOSE_CARDS);
         }
 
         int bound = punishmentPool.size();
@@ -130,7 +126,7 @@ public class PunishmentHandler {
                     e.printStackTrace();
                 }
                 break;
-            case LOSE_CARD:
+            case LOSE_CARDS:
                 // Lose 5 cards
                 int i;
                 for (AbstractCard card : cardsToSteal) {
@@ -138,7 +134,7 @@ public class PunishmentHandler {
                 }
                 playLoseEffect(AbstractDungeon.topPanel.deckHb.x, AbstractDungeon.topPanel.deckHb.y);
                 break;
-            case LOSE_POTION:
+            case LOSE_POTIONS:
                 // Remove all potions
                 List<AbstractPotion> potionsToRemove = AbstractDungeon.player.potions.stream()
                         .filter(potion -> !(potion instanceof PotionSlot)).collect(Collectors.toList());
@@ -148,7 +144,7 @@ public class PunishmentHandler {
                     playLoseEffect(potion.posX, potion.posY);
                 }
                 break;
-            case LOSE_RELIC:
+            case LOSE_RELICS:
                 // Steal 2 relics
                 for (int j = 0; j < RELIC_STEAL_COUNT; j++) {
                     int index = ThievingMod.random.nextInt(AbstractDungeon.player.relics.size());
