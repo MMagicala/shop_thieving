@@ -27,8 +27,8 @@ import java.util.LinkedList;
 public class CutsceneHandler {
     private static final LinkedList<Dialogue> dialogueQueue = new LinkedList<>();
     private static float currentDialogueTime;
+    public static boolean showProceedButton = false;
 
-    // Merchant dialogue
     // Hide proceed button while dialogue in progress
     @SpirePatch(
             clz = ProceedButton.class,
@@ -37,7 +37,7 @@ public class CutsceneHandler {
     public static class DisableProceedButtonPatch {
         @SpirePrefixPatch
         public static void Prefix(ProceedButton __instance) {
-            if (ShopliftingHandler.isKickedOut && !PunishmentHandler.isPunishmentIssued) {
+            if (ShopliftingHandler.isPlayerKickedOut && !showProceedButton) {
                 __instance.hide();
             }
         }
@@ -54,8 +54,8 @@ public class CutsceneHandler {
                 @Override
                 public void edit(MethodCall m) throws CannotCompileException {
                     if (m.getMethodName().equals("updateMapButtonLogic")) {
-                        m.replace("if(!" + ShopliftingHandler.class.getName() + ".isKickedOut || " +
-                                PunishmentHandler.class.getName() + ".isPunishmentIssued){$_ = $proceed($$);}");
+                        m.replace("if(!" + ShopliftingHandler.class.getName() + ".isPlayerKickedOut || " +
+                                CutsceneHandler.class.getName() + ".showProceedButton){$_ = $proceed($$);}");
                     }
                 }
             };
@@ -72,14 +72,14 @@ public class CutsceneHandler {
                 locator = SpeechTimerUpdateLocator.class
         )
         public static void Insert(Merchant __instance) {
-            if (ShopliftingHandler.isKickedOut) {
-                // Freeze the merchant's speech timer when kicked out
+            if (ShopliftingHandler.isPlayerKickedOut) {
+                // Freeze the merchant's speech timer when kicked out (undo the decrement)
                 float speechTimer = (float) ReflectionHacks.getPrivate(__instance, Merchant.class, "speechTimer");
                 speechTimer += Gdx.graphics.getDeltaTime();
                 ReflectionHacks.setPrivate(__instance, Merchant.class, "speechTimer", speechTimer);
 
                 if (currentDialogueTime > 0) {
-                    // Update our own speech timer
+                    // Update custom speech timer
                     currentDialogueTime -= Gdx.graphics.getDeltaTime();
                 } else {
                     if (!dialogueQueue.isEmpty()) {
@@ -127,6 +127,7 @@ public class CutsceneHandler {
 
     /**
      * Determines if shopkeeper has stopped talking or not
+     * Used to tell if we can click on the shopkeeper for dialogue
      */
     public static boolean isDialogueFinished() {
         return currentDialogueTime <= 0 && dialogueQueue.isEmpty();

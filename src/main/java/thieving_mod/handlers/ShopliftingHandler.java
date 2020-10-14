@@ -24,7 +24,7 @@ public class ShopliftingHandler {
 
     // Flags
     public static boolean isItemSuccessfullyStolen = false;
-    public static boolean isKickedOut = false;
+    public static boolean isPlayerKickedOut = false;
 
     // Stats
     public static float successRateMultiplier = 1;
@@ -118,7 +118,7 @@ public class ShopliftingHandler {
 
             // Kick player out of shop
             AbstractDungeon.closeCurrentScreen();
-            ShopliftingHandler.isKickedOut = true;
+            ShopliftingHandler.isPlayerKickedOut = true;
 
             PunishmentHandler.selectRandomPunishment();
 

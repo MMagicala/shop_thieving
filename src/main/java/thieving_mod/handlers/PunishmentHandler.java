@@ -3,14 +3,13 @@ package thieving_mod.handlers;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
-import com.megacrit.cardcrawl.blights.AbstractBlight;
 import com.megacrit.cardcrawl.cards.CardGroup;
 import com.megacrit.cardcrawl.cards.DamageInfo;
+import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.core.AbstractCreature;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
-import com.megacrit.cardcrawl.core.Settings;
+import com.megacrit.cardcrawl.cutscenes.Cutscene;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
-import com.megacrit.cardcrawl.helpers.BlightHelper;
 import com.megacrit.cardcrawl.neow.NeowEvent;
 import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.screens.select.GridCardSelectScreen;
@@ -31,20 +30,19 @@ public class PunishmentHandler {
     public static boolean isPunishmentIssued = false;
     private static boolean dontInitializeNeowEvent = false;
 
-    public static void selectRandomPunishment(){
+    public static void selectRandomPunishment() {
         // Randomly pick punishment in advance
         ArrayList<Punishment> punishmentPool = new ArrayList<>(Arrays.asList(Punishment.values()));
         // Don't include lose all gold punishment if player has <100 gold
         if (AbstractDungeon.player.gold < 99) {
             punishmentPool.remove(Punishment.LOSE_ALL_GOLD);
         }
-        // TODO: use streams?
         int bound = punishmentPool.size();
         int randomIndex = ThievingMod.random.nextInt(bound);
         decidedPunishment = punishmentPool.get(randomIndex);
     }
 
-    public static void issuePunishment(){
+    public static void issuePunishment() {
         switch (decidedPunishment) {
             case LOSE_ALL_GOLD:
                 // Sfx
@@ -69,7 +67,7 @@ public class PunishmentHandler {
                 }
                 // Steal gold
                 AbstractDungeon.player.loseGold(AbstractDungeon.player.gold);
-                isPunishmentIssued = true;
+                CutsceneHandler.showProceedButton = true;
                 break;
             case CURSES:
                 // Sfx and vfx
@@ -91,37 +89,72 @@ public class PunishmentHandler {
                 } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                     e.printStackTrace();
                 }
-                isPunishmentIssued = true;
                 break;
         }
+        isPunishmentIssued = true;
     }
 
     @SpirePatch(
             clz = NeowEvent.class,
-            method=SpirePatch.CONSTRUCTOR,
-            paramtypez={boolean.class}
+            method = "uniqueBlight"
+    )
+    public static class UniqueBlightPatch{
+        // Set punishment issued flag to true once we receive blights
+        @SpirePrefixPatch
+        public static void patch(NeowEvent __instance){
+            if (ShopliftingHandler.isPlayerKickedOut) {
+                CutsceneHandler.showProceedButton = true;
+            }
+        }
+
+        // If we get the three curses blight, dont show the proceed button yet
+        @SpireInsertPatch(
+                locator = GrotesqueTrophyLocator.class
+        )
+        public static void Insert(NeowEvent __instance) {
+            if (CutsceneHandler.showProceedButton) {
+                CutsceneHandler.showProceedButton = false;
+            }
+        }
+
+        private static class GrotesqueTrophyLocator extends SpireInsertLocator {
+            public int[] Locate(CtBehavior ctMethodToPatch) throws CannotCompileException, PatchingException {
+                Matcher matcher = new Matcher.MethodCallMatcher(AbstractPlayer.class, "getBlight");
+                int[] results = LineFinder.findAllInOrder(ctMethodToPatch, matcher);
+                return new int[]{results[3]};
+            }
+        }
+    }
+
+    // Don't initialize anything in the neow event if we are just running the blight functions
+    @SpirePatch(
+            clz = NeowEvent.class,
+            method = SpirePatch.CONSTRUCTOR,
+            paramtypez = {boolean.class}
     )
     public static class NeowEventConstructorPatch {
         @SpirePrefixPatch
-        public static SpireReturn<Void> patch(NeowEvent __instance, boolean isDone){
-            if(dontInitializeNeowEvent){
+        public static SpireReturn<Void> patch(NeowEvent __instance, boolean isDone) {
+            if (dontInitializeNeowEvent) {
                 return SpireReturn.Return(null);
             }
             return SpireReturn.Continue();
         }
     }
 
-        // Set punishment issued flag to true once curses are received
+    // Set punishment issued flag to true once curses are received from a punishment
     @SpirePatch(
             clz = GridCardSelectScreen.class,
-            method="update"
+            method = "update"
     )
-    public static class GridScreenConfirmPatch{
+    public static class GridScreenConfirmPatch {
         @SpireInsertPatch(
                 locator = CloseCurrentScreenLocator.class
         )
-        public static void Insert(GridCardSelectScreen __instance){
-            isPunishmentIssued = true;
+        public static void Insert(GridCardSelectScreen __instance) {
+            if (ShopliftingHandler.isPlayerKickedOut) {
+                CutsceneHandler.showProceedButton = true;
+            }
         }
 
         private static class CloseCurrentScreenLocator extends SpireInsertLocator {

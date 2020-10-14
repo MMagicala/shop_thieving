@@ -8,7 +8,6 @@ import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import thieving_mod.*;
 import thieving_mod.handlers.CutsceneHandler;
-import thieving_mod.handlers.PunishmentHandler;
 import thieving_mod.handlers.ShopliftingHandler;
 
 // Merchant dialogue on click
@@ -21,12 +20,12 @@ public class MerchantClickedPatch {
             locator = MerchantClickedLocator.class
     )
     public static SpireReturn<Void> Insert(Merchant __instance) {
-        if (ShopliftingHandler.isKickedOut && PunishmentHandler.isPunishmentIssued && CutsceneHandler.isDialogueFinished()) {
+        if (ShopliftingHandler.isPlayerKickedOut && CutsceneHandler.isDialogueFinished()) {
             // Play custom merchant dialogue once clicked
             CutsceneHandler.enqueueMerchantDialogue(DialoguePool.FORBID);
         }
         // Don't let player enter shop if they were kicked out
-        return ShopliftingHandler.isKickedOut ? SpireReturn.Return(null) : SpireReturn.Continue();
+        return ShopliftingHandler.isPlayerKickedOut ? SpireReturn.Return(null) : SpireReturn.Continue();
     }
 
     private static class MerchantClickedLocator extends SpireInsertLocator {

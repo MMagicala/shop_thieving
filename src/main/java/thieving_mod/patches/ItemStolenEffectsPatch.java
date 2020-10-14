@@ -186,7 +186,7 @@ public class ItemStolenEffectsPatch {
             };
         }
 
-        // Play text Item Stolen after all particles have been added to the queue
+        // Show "Item Stolen" text after all particles have been added to the queue
         @SpirePostfixPatch
         public static void Postfix() {
             if (ShopliftingHandler.isItemSuccessfullyStolen) {

@@ -18,12 +18,9 @@ public class NextRoomTransitionPatch {
     @SpirePostfixPatch
     public static void Postfix(AbstractDungeon __instance, SaveFile saveFile) {
         // Reset flags
-        if (ShopliftingHandler.isKickedOut) {
-            ShopliftingHandler.isKickedOut = false;
-        }
-        if (PunishmentHandler.isPunishmentIssued) {
-            PunishmentHandler.isPunishmentIssued = false;
-        }
+        ShopliftingHandler.isPlayerKickedOut = false;
+        PunishmentHandler.isPunishmentIssued = false;
+        CutsceneHandler.showProceedButton = false;
         CutsceneHandler.reset();
 
         // Reset stats
