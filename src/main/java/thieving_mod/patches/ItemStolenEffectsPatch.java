@@ -88,8 +88,7 @@ public class ItemStolenEffectsPatch {
         private static String getExpr(String fileName, String methodName) {
             StringBuilder sb = new StringBuilder();
             sb.append("if(!");
-            sb.append(ShopliftingHandler.class.getName());
-            sb.append(".isItemSuccessfullyStolen){ $_ = $proceed($$);");
+            sb.append(".isStolen){ $_ = $proceed($$);");
             if (methodName.equals("createSpeech")) {
                 sb.append("}else{");
 

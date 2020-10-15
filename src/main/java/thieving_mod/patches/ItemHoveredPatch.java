@@ -8,6 +8,7 @@ import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.evacipated.cardcrawl.modthespire.patcher.PatchingException;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
+import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
@@ -15,6 +16,13 @@ import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
+import com.megacrit.cardcrawl.vfx.DoorShineParticleEffect;
+import com.megacrit.cardcrawl.vfx.FireBurstParticleEffect;
+import com.megacrit.cardcrawl.vfx.UpgradeShineParticleEffect;
+import com.megacrit.cardcrawl.vfx.combat.*;
+import com.megacrit.cardcrawl.vfx.scene.SlowFireParticleEffect;
+import com.megacrit.cardcrawl.vfx.stance.CalmParticleEffect;
+import com.megacrit.cardcrawl.vfx.stance.WrathParticleEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import thieving_mod.ThievingMod;
@@ -141,9 +149,10 @@ public class ItemHoveredPatch {
                 } else if (highlightedItem instanceof AbstractCard) {
                     ((AbstractCard) highlightedItem).render(sb);
                 }
-                // Show tooltip
+                // Show effects + tooltip
                 float x = InputHelper.mX;
                 float y = InputHelper.mY - 64;
+                AbstractDungeon.topLevelEffectsQueue.add(new CalmParticleEffect());
                 FontHelper.renderFontLeft(sb, FontHelper.bannerFont, "Steal item?", x, y, Color.WHITE);
             }
             // Reset flags for next render cycle

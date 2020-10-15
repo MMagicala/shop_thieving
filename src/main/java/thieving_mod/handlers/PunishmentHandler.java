@@ -19,6 +19,7 @@ import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import thieving_mod.Punishment;
 import thieving_mod.ThievingMod;
+import thieving_mod.fields.IsKickedOut;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -26,9 +27,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class PunishmentHandler {
-    public static Punishment decidedPunishment;
     public static boolean isPunishmentIssued = false;
+
+    private static Punishment decidedPunishment;
     private static boolean dontInitializeNeowEvent = false;
+
+    public static Punishment getDecidedPunishment(){
+        return decidedPunishment;
+    }
 
     public static void selectRandomPunishment() {
         // Randomly pick punishment in advance
@@ -102,7 +108,7 @@ public class PunishmentHandler {
         // Set punishment issued flag to true once we receive blights
         @SpirePrefixPatch
         public static void patch(NeowEvent __instance){
-            if (ShopliftingHandler.isPlayerKickedOut) {
+            if (IsKickedOut.isKickedOut.get(AbstractDungeon.player)) {
                 CutsceneHandler.showProceedButton = true;
             }
         }
@@ -152,7 +158,7 @@ public class PunishmentHandler {
                 locator = CloseCurrentScreenLocator.class
         )
         public static void Insert(GridCardSelectScreen __instance) {
-            if (ShopliftingHandler.isPlayerKickedOut) {
+            if (IsKickedOut.isKickedOut.get(AbstractDungeon.player)) {
                 CutsceneHandler.showProceedButton = true;
             }
         }

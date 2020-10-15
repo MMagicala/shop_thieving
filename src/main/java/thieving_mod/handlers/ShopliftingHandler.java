@@ -1,7 +1,10 @@
 package thieving_mod.handlers;
 
+import com.evacipated.cardcrawl.modthespire.lib.SpireField;
+import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.DamageInfo;
+import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
@@ -12,6 +15,8 @@ import com.megacrit.cardcrawl.shop.StoreRelic;
 import thieving_mod.DialoguePool;
 import thieving_mod.ItemStats;
 import thieving_mod.ThievingMod;
+import thieving_mod.fields.IsKickedOut;
+import thieving_mod.fields.IsStolen;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -22,13 +27,9 @@ public class ShopliftingHandler {
     // Temp vars
     public static float prevItemX, prevItemY;
 
-    // Flags
-    public static boolean isItemSuccessfullyStolen = false;
-    public static boolean isPlayerKickedOut = false;
-
     // Stats
     public static float successRateMultiplier = 1;
-    public static final int damageAmount = 20;
+    public static final int DAMAGE_AMOUNT = 20;
 
     // Probability tables
     private static final HashMap<AbstractPotion.PotionRarity, Float> potionProbabilities = new HashMap<AbstractPotion.PotionRarity, Float>(){
@@ -79,10 +80,9 @@ public class ShopliftingHandler {
     public static void attemptToSteal(Object item){
         // Attempt to steal the item
         float rollResult = ThievingMod.random.nextFloat();
-        if (rollResult < ShopliftingHandler.getSuccessRate(item)) {
+        if (rollResult < getSuccessRate(item)) {
             // Success! Set flags to true
-            isItemSuccessfullyStolen = true;
-
+            IsStolen.isStolen.set(item, true);
             // Give player money to "purchase" item
             AbstractDungeon.player.gold += ItemStats.getPrice(item);
 
@@ -105,7 +105,7 @@ public class ShopliftingHandler {
             }
         } else {
             // If caught, take damage
-            AbstractDungeon.player.damage(new DamageInfo(null, ShopliftingHandler.damageAmount, DamageInfo.DamageType.NORMAL));
+            AbstractDungeon.player.damage(new DamageInfo(null, DAMAGE_AMOUNT, DamageInfo.DamageType.NORMAL));
 
             // Play sound
             int coin = ThievingMod.random.nextInt(2);
@@ -118,13 +118,13 @@ public class ShopliftingHandler {
 
             // Kick player out of shop
             AbstractDungeon.closeCurrentScreen();
-            ShopliftingHandler.isPlayerKickedOut = true;
+            IsKickedOut.isKickedOut.set(AbstractDungeon.player, true);
 
             PunishmentHandler.selectRandomPunishment();
 
             // Load shopkeeper dialogue
             CutsceneHandler.enqueueMerchantDialogue(DialoguePool.CAUGHT);
-            CutsceneHandler.enqueueMerchantDialogue(PunishmentHandler.decidedPunishment);
+            CutsceneHandler.enqueueMerchantDialogue(PunishmentHandler.getDecidedPunishment());
         }
     }
 }
