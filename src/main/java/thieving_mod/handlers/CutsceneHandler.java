@@ -11,23 +11,24 @@ import com.megacrit.cardcrawl.rooms.ShopRoom;
 import com.megacrit.cardcrawl.shop.Merchant;
 import com.megacrit.cardcrawl.ui.buttons.ProceedButton;
 import com.megacrit.cardcrawl.ui.panels.TopPanel;
-import com.megacrit.cardcrawl.vfx.SpeechBubble;
+import com.megacrit.cardcrawl.vfx.*;
+import com.megacrit.cardcrawl.vfx.combat.StunStarEffect;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
-import thieving_mod.Dialogue;
-import thieving_mod.DialoguePool;
-import thieving_mod.Punishment;
-import thieving_mod.ThievingMod;
+import thieving_mod.*;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.LinkedList;
 
 public class CutsceneHandler {
     private static final LinkedList<Dialogue> dialogueQueue = new LinkedList<>();
-    private static float currentDialogueTime;
+    private static float currentDialogueTimeLeft;
+    private static float starsEffectTimer;
     public static boolean showProceedButton = false;
+    // public static boolean dontInitializeInflameEffect = false;
 
     // Hide proceed button while dialogue in progress
     @SpirePatch(
@@ -62,6 +63,23 @@ public class CutsceneHandler {
         }
     }
 
+/*
+    // Don't initialize inflame effect if we want to set its x and y pos manually
+    @SpirePatch(
+            clz = InflameEffect.class,
+            method = SpirePatch.CONSTRUCTOR
+    )
+    public static class InflamePatch {
+        @SpirePrefixPatch
+        public static SpireReturn<Void> patch(InflameEffect __instance) {
+            if (dontInitializeInflameEffect) {
+                return SpireReturn.Return(null);
+            }
+            return SpireReturn.Continue();
+        }
+    }
+*/
+
     // Mute merchant and play our own automatic dialogue
     @SpirePatch(
             clz = Merchant.class,
@@ -78,9 +96,18 @@ public class CutsceneHandler {
                 speechTimer += Gdx.graphics.getDeltaTime();
                 ReflectionHacks.setPrivate(__instance, Merchant.class, "speechTimer", speechTimer);
 
-                if (currentDialogueTime > 0) {
+                if (currentDialogueTimeLeft > 0) {
                     // Update custom speech timer
-                    currentDialogueTime -= Gdx.graphics.getDeltaTime();
+                    currentDialogueTimeLeft -= Gdx.graphics.getDeltaTime();
+                    // Update stars timer and effect
+                    if(starsEffectTimer <= 0){
+                        starsEffectTimer = 0.67f;
+                        float x = AbstractDungeon.player.hb.cX;
+                        float y = AbstractDungeon.player.hb.cY + AbstractDungeon.player.hb.height/2;
+                        AbstractDungeon.effectsQueue.add(new StunStarEffect(x, y));
+                    }else{
+                        starsEffectTimer -= Gdx.graphics.getDeltaTime();
+                    }
                 } else {
                     if (!dialogueQueue.isEmpty()) {
                         // Once time runs out, make merchant talk
@@ -91,8 +118,29 @@ public class CutsceneHandler {
                                 dialogue.text, false));
                         // Play his sfx
                         CardCrawlGame.sound.play(dialogue.sfxKey);
+                        // Play vfx
+                        for (Effect effect : dialogue.effects) {
+                            // try {
+                            float x = -1, y = -1;
+                            switch (effect.entity) {
+                                case PLAYER:
+                                    x = AbstractDungeon.player.hb.cX;
+                                    y = AbstractDungeon.player.hb.cY;
+                                    break;
+                                case MERCHANT:
+                                    x = merchant.hb.cX;
+                                    y = merchant.hb.cY;
+                                    break;
+                            }
+                            try {
+                                AbstractGameEffect vfx = (AbstractGameEffect) (effect.effect.getDeclaredConstructors()[0].newInstance(x, y));
+                                AbstractDungeon.topLevelEffectsQueue.add(vfx);
+                            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                                e.printStackTrace();
+                            }
+                        }
                         // Reset timer
-                        currentDialogueTime = dialogue.duration;
+                        currentDialogueTimeLeft = dialogue.duration;
                     } else if (!PunishmentHandler.isPunishmentIssued) {
                         // After dialogue is finally completed, apply the punishment
                         PunishmentHandler.issuePunishment();
@@ -114,11 +162,12 @@ public class CutsceneHandler {
      */
     public static void enqueueMerchantDialogue(DialoguePool dialoguePool) {
         int index = ThievingMod.random.nextInt(dialoguePool.values.length);
-        dialogueQueue.add(new Dialogue( dialoguePool.values[index].text,dialoguePool.values[index].duration));
+        dialogueQueue.add(new Dialogue(dialoguePool.values[index].text, dialoguePool.values[index].duration));
     }
 
     /**
      * Enqueue all the dialogue for that punishment
+     *
      * @param punishment Contains the merchant dialogue
      */
     public static void enqueueMerchantDialogue(Punishment punishment) {
@@ -130,11 +179,12 @@ public class CutsceneHandler {
      * Used to tell if we can click on the shopkeeper for dialogue
      */
     public static boolean isDialogueFinished() {
-        return currentDialogueTime <= 0 && dialogueQueue.isEmpty();
+        return currentDialogueTimeLeft <= 0 && dialogueQueue.isEmpty();
     }
 
     public static void reset() {
-        currentDialogueTime = 0;
+        currentDialogueTimeLeft = 0;
+        starsEffectTimer = 0;
         dialogueQueue.clear();
     }
 }

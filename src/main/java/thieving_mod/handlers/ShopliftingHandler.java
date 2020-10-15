@@ -28,7 +28,7 @@ public class ShopliftingHandler {
 
     // Stats
     public static float successRateMultiplier = 1;
-    public static final int damageAmount = 20;
+    private static final int DAMAGE_AMOUNT = 20;
 
     // Probability tables
     private static final HashMap<AbstractPotion.PotionRarity, Float> potionProbabilities = new HashMap<AbstractPotion.PotionRarity, Float>(){
@@ -105,7 +105,7 @@ public class ShopliftingHandler {
             }
         } else {
             // If caught, take damage
-            AbstractDungeon.player.damage(new DamageInfo(null, ShopliftingHandler.damageAmount, DamageInfo.DamageType.NORMAL));
+            AbstractDungeon.player.damage(new DamageInfo(null, DAMAGE_AMOUNT, DamageInfo.DamageType.NORMAL));
 
             // Play sound
             int coin = ThievingMod.random.nextInt(2);
