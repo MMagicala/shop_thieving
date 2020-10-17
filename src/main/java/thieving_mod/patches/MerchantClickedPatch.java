@@ -6,7 +6,7 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.shop.Merchant;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
-import thieving_mod.*;
+import thieving_mod.enums.DialoguePool;
 import thieving_mod.handlers.CutsceneHandler;
 import thieving_mod.handlers.ShopliftingHandler;
 

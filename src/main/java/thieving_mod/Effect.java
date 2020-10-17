@@ -1,6 +1,7 @@
 package thieving_mod;
 
 import com.megacrit.cardcrawl.vfx.AbstractGameEffect;
+import thieving_mod.enums.Entity;
 
 public class Effect {
     public Entity entity;

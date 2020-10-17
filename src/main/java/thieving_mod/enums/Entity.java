@@ -1,4 +1,4 @@
-package thieving_mod;
+package thieving_mod.enums;
 
 public enum Entity {
     MERCHANT, PLAYER

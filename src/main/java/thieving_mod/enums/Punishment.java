@@ -1,9 +1,8 @@
-package thieving_mod;
+package thieving_mod.enums;
 
-import com.megacrit.cardcrawl.vfx.CollectorCurseEffect;
-import com.megacrit.cardcrawl.vfx.*;
 import com.megacrit.cardcrawl.vfx.combat.FlameBarrierEffect;
-import com.megacrit.cardcrawl.vfx.combat.FlameParticleEffect;
+import thieving_mod.Dialogue;
+import thieving_mod.Effect;
 
 public enum Punishment {
     CURSES(new Dialogue("May this curse stick with you for the rest of your journey...", 3, "K",

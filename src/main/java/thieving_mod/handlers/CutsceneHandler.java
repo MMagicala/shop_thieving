@@ -18,6 +18,8 @@ import javassist.CtBehavior;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
 import thieving_mod.*;
+import thieving_mod.enums.DialoguePool;
+import thieving_mod.enums.Punishment;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;

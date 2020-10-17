@@ -9,7 +9,7 @@ import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.shop.ShopScreen;
 import com.megacrit.cardcrawl.shop.StorePotion;
 import com.megacrit.cardcrawl.shop.StoreRelic;
-import thieving_mod.DialoguePool;
+import thieving_mod.enums.DialoguePool;
 import thieving_mod.ItemStats;
 import thieving_mod.ThievingMod;
 
@@ -31,7 +31,7 @@ public class ShopliftingHandler {
     private static final int DAMAGE_AMOUNT = 20;
 
     // Probability tables
-    private static final HashMap<AbstractPotion.PotionRarity, Float> potionProbabilities = new HashMap<AbstractPotion.PotionRarity, Float>(){
+    private static final HashMap<AbstractPotion.PotionRarity, Float> POTION_PROBABILITIES = new HashMap<AbstractPotion.PotionRarity, Float>(){
         {
             put(AbstractPotion.PotionRarity.COMMON, 0.5f);
             put(AbstractPotion.PotionRarity.UNCOMMON, 0.4f);
@@ -39,7 +39,7 @@ public class ShopliftingHandler {
         }
     };
 
-    private static final HashMap<AbstractRelic.RelicTier, Float> relicProbabilities = new HashMap<AbstractRelic.RelicTier, Float>(){
+    private static final HashMap<AbstractRelic.RelicTier, Float> RELIC_PROBABILITIES = new HashMap<AbstractRelic.RelicTier, Float>(){
         {
             put(AbstractRelic.RelicTier.COMMON, 0.5f);
             put(AbstractRelic.RelicTier.SHOP, 0.5f);
@@ -49,7 +49,7 @@ public class ShopliftingHandler {
         }
     };
 
-    private static final HashMap<AbstractCard.CardRarity, Float> cardProbabilities = new HashMap<AbstractCard.CardRarity, Float>(){
+    private static final HashMap<AbstractCard.CardRarity, Float> CARD_PROBABILITIES = new HashMap<AbstractCard.CardRarity, Float>(){
         {
             put(AbstractCard.CardRarity.COMMON, 0.5f);
             put(AbstractCard.CardRarity.UNCOMMON, 0.4f);
@@ -61,11 +61,11 @@ public class ShopliftingHandler {
     public static float getSuccessRate(Object item){
         float successRate = successRateMultiplier;
         if (item instanceof StoreRelic) {
-            successRate *= relicProbabilities.get(((StoreRelic)item).relic.tier);
+            successRate *= RELIC_PROBABILITIES.get(((StoreRelic)item).relic.tier);
         } else if (item instanceof StorePotion) {
-            successRate *= potionProbabilities.get(((StorePotion)item).potion.rarity);
+            successRate *= POTION_PROBABILITIES.get(((StorePotion)item).potion.rarity);
         } else if (item instanceof AbstractCard) {
-            successRate *= cardProbabilities.get(((AbstractCard)item).rarity);
+            successRate *= CARD_PROBABILITIES.get(((AbstractCard)item).rarity);
         }
 
         // Success rate can't be higher than one hundred percent

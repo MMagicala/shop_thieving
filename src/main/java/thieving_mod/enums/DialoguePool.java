@@ -1,4 +1,6 @@
-package thieving_mod;
+package thieving_mod.enums;
+
+import thieving_mod.Dialogue;
 
 public enum DialoguePool {
     CAUGHT(new Dialogue("Thief!", 3), new Dialogue("Hey! No stealing!", 3), new Dialogue("I caught you!", 3)),

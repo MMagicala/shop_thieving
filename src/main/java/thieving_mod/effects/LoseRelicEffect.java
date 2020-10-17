@@ -1,11 +1,10 @@
 package thieving_mod.effects;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.megacrit.cardcrawl.potions.AbstractPotion;
 import com.megacrit.cardcrawl.relics.AbstractRelic;
 
 public class LoseRelicEffect extends LoseItemEffect {
-    private AbstractRelic relic;
+    private final AbstractRelic relic;
 
     public LoseRelicEffect(AbstractRelic relic, float initX, float initY, float targetX, float targetY) {
         super(initX, initY, targetX, targetY);
