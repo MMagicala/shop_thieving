@@ -25,5 +25,7 @@ public class NextRoomTransitionPatch {
 
         // Reset stats
         ShopliftingHandler.successRateMultiplier = 1;
+
+        //
     }
 }

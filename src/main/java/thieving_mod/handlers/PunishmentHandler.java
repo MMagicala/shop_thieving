@@ -11,6 +11,7 @@ import com.megacrit.cardcrawl.core.AbstractCreature;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
+import com.megacrit.cardcrawl.map.MapRoomNode;
 import com.megacrit.cardcrawl.neow.NeowEvent;
 import com.megacrit.cardcrawl.potions.AbstractPotion;
 import com.megacrit.cardcrawl.potions.PotionSlot;
@@ -80,7 +81,7 @@ public class PunishmentHandler {
 
         int bound = punishmentPool.size();
         int randomIndex = ThievingMod.random.nextInt(bound);
-        decidedPunishment = punishmentPool.get(randomIndex);
+        decidedPunishment = MAP_FOG; // punishmentPool.get(randomIndex);
     }
 
     public static void issuePunishment() {
@@ -145,7 +146,6 @@ public class PunishmentHandler {
                     displayCount += Settings.WIDTH / 6.0F;
                     AbstractDungeon.player.masterDeck.removeCard(card);
                 }
-                CardCrawlGame.sound.play("CARD_BURN");
                 CutsceneHandler.showProceedButton = true;
                 break;
             case LOSE_POTIONS:
@@ -161,7 +161,6 @@ public class PunishmentHandler {
 
                     AbstractDungeon.player.removePotion(potionsToRemove.get(j));
                 }
-                CardCrawlGame.sound.play("CARD_BURN");
                 CutsceneHandler.showProceedButton = true;
                 break;
             case LOSE_RELICS:
@@ -184,11 +183,16 @@ public class PunishmentHandler {
                             Settings.HEIGHT / 2f));
                     AbstractDungeon.player.loseRelic(chosenRelics.get(k).relicId);
                 }
-                CardCrawlGame.sound.play("CARD_BURN");
+                CutsceneHandler.showProceedButton = true;
+                break;
+            case MAP_FOG:
+                HideMapHandler.hideMap();
                 CutsceneHandler.showProceedButton = true;
                 break;
         }
-        // Set flag
+        if(decidedPunishment.loseItem){
+            CardCrawlGame.sound.play("CARD_BURN");
+        }
         isPunishmentIssued = true;
     }
 

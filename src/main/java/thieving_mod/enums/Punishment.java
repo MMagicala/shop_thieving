@@ -11,15 +11,23 @@ public enum Punishment {
             new Dialogue("Now I will do the same to you...", 2.5f, "K")),
     BLIGHT(new Dialogue("Have this blight instead!", 3, "K",
             new Effect(Entity.MERCHANT, FlameBarrierEffect.class))),
-    LOSE_CARDS(new Dialogue("You tried to steal from me?", 2.5f, "3"),
+    LOSE_CARDS(true, new Dialogue("You tried to steal from me?", 2.5f, "3"),
             new Dialogue("Now I will do the same to you...", 2.5f, "K")),
-    LOSE_RELICS(new Dialogue("You tried to steal from me?", 2.5f, "3"),
+    LOSE_RELICS(true, new Dialogue("You tried to steal from me?", 2.5f, "3"),
             new Dialogue("Now I will do the same to you...", 2.5f, "K")),
-    LOSE_POTIONS(new Dialogue("You tried to steal from me?", 2.5f, "3"),
-            new Dialogue("Now I will do the same to you...", 2.5f, "K"));
+    LOSE_POTIONS(true, new Dialogue("You tried to steal from me?", 2.5f, "3"),
+            new Dialogue("Now I will do the same to you...", 2.5f, "K")),
+    MAP_FOG(new Dialogue("Time to blind you!", 2f, "K"));
+
     public Dialogue[] dialogue;
+    public boolean loseItem;
+
+    Punishment(boolean loseItem, Dialogue... dialogue) {
+        this.loseItem = loseItem;
+        this.dialogue = dialogue;
+    }
 
     Punishment(Dialogue... dialogue) {
-        this.dialogue = dialogue;
+        this(false, dialogue);
     }
 }
