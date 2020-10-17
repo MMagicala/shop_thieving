@@ -122,7 +122,6 @@ public class CutsceneHandler {
                         CardCrawlGame.sound.play(dialogue.sfxKey);
                         // Play vfx
                         for (Effect effect : dialogue.effects) {
-                            // try {
                             float x = -1, y = -1;
                             switch (effect.entity) {
                                 case PLAYER:
