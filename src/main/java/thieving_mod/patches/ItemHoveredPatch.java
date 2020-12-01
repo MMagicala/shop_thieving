@@ -144,7 +144,7 @@ public class ItemHoveredPatch {
                 // Show tooltip
                 float x = InputHelper.mX;
                 float y = InputHelper.mY - 64;
-                FontHelper.renderFontLeft(sb, FontHelper.bannerFont, "Steal item?", x, y, Color.WHITE);
+                FontHelper.renderFontLeft(sb, FontHelper.losePowerFont, "Steal item?", x, y, Color.WHITE);
             }
             // Reset flags for next render cycle
             isDarkBgRendered = false;
